@@ -202,9 +202,42 @@ public class WaveManager {
         SpawnAt(entry.Type, pos, entry.Elite, true);
     }
 
+    /// <summary>
+    /// Nudge a spawn out of solid geometry. The city now carries ~700 colliders - street
+    /// furniture, parked cars, planters - so an unchecked drop point lands inside something
+    /// often enough to matter. Spirals outward for the nearest clear spot and gives up
+    /// gracefully rather than refusing to spawn.
+    /// </summary>
+    Vector3 ResolveSpawn(Vector3 pos, float radius) {
+        var arena = _ctx.Arena;
+        if (arena == null) return pos;
+
+        bool Blocked(Vector3 c) {
+            for (int i = 0; i < arena.Boxes.Count; i++) {
+                var b = arena.Boxes[i];
+                if (b.isWater || b.max.y < 0.2f) continue;
+                if (b.OverlapsXZ(c.x, c.z, radius)) return true;
+            }
+            return false;
+        }
+
+        if (!Blocked(pos)) return pos;
+        for (float ring = 2f; ring <= 10f; ring += 2f) {
+            for (int i = 0; i < 8; i++) {
+                float a = i / 8f * Mathf.PI * 2f;
+                var c = new Vector3(pos.x + Mathf.Cos(a) * ring, pos.y, pos.z + Mathf.Sin(a) * ring);
+                if (!Blocked(c)) return c;
+            }
+        }
+        return pos;
+    }
+
     public Enemy SpawnAt(string type, Vector3 pos, bool elite, bool dropIn) {
         var data = EnemyRoster.Get(type);
         if (data == null) return null;
+
+        // Aerial units drop in above the street and are never blocked by it.
+        if (data.HoverHeight <= 0f) pos = ResolveSpawn(pos, data.Radius + 0.4f);
 
         var go = new GameObject(type);
         go.transform.SetParent(_parent, false);

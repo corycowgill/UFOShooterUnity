@@ -45,7 +45,7 @@ public class Enemy : MonoBehaviour {
     float _hoverPhase;
     float _losTimer, _noLos;
     float _frontRegen;
-    float _ghostTimer, _stuckAcc, _stuckX, _stuckZ;
+    float _ghostTimer, _stuckAcc, _stuckX, _stuckZ, _pathAcc;
     float _pendingMelee = -1f;
     bool _diving, _crashed;
     float _yaw;
@@ -292,10 +292,15 @@ public class Enemy : MonoBehaviour {
 
         var boxes = Ctx.Arena.Boxes;
         float r = Data.Radius;
+        bool ghost = _ghostTimer > 0f;
 
         // Unstick: a bad spawn or a knockback can leave us inside a box. Push out the short way.
+        // While ghosting, soft props are ignored here too - otherwise this pass shoves the unit
+        // out every frame, the AI walks straight back in, and it oscillates in place forever
+        // while its odometer climbs. That is exactly what the audit caught.
         for (int i = 0; i < boxes.Count; i++) {
             var b = boxes[i];
+            if (ghost && b.soft) continue;
             if (b.max.y < 0.2f || p.x <= b.min.x || p.x >= b.max.x || p.z <= b.min.z || p.z >= b.max.z) continue;
             float[] ex = { b.min.x - p.x - r, b.max.x - p.x + r, b.min.z - p.z - r, b.max.z - p.z + r };
             int k = 0;
@@ -306,7 +311,6 @@ public class Enemy : MonoBehaviour {
 
         float nx = p.x + dir.x * step, nz = p.z + dir.z * step;
         bool okX = true, okZ = true;
-        bool ghost = _ghostTimer > 0f;
 
         for (int i = 0; i < boxes.Count; i++) {
             var b = boxes[i];
@@ -341,12 +345,17 @@ public class Enemy : MonoBehaviour {
             }
         }
 
-        // Stuck detector: barely moving for a second means step over soft props for a while.
+        // Stuck detector. Two ways to be stuck, and the second is the one that was being missed:
+        //   - barely moving at all
+        //   - covering ground fast while getting nowhere, i.e. oscillating against a collider
+        _pathAcc += step;
         _stuckAcc += dt;
         if (_stuckAcc > 1f) {
-            float moved = Mathf.Sqrt((p.x - _stuckX) * (p.x - _stuckX) + (p.z - _stuckZ) * (p.z - _stuckZ));
-            _stuckX = p.x; _stuckZ = p.z; _stuckAcc = 0f;
-            if (moved < 0.6f) _ghostTimer = 2.5f;
+            float net = Mathf.Sqrt((p.x - _stuckX) * (p.x - _stuckX) + (p.z - _stuckZ) * (p.z - _stuckZ));
+            // Travelling more than three times the net displacement is not progress.
+            bool oscillating = _pathAcc > 1.5f && net < _pathAcc * 0.33f;
+            if (net < 0.6f || oscillating) _ghostTimer = 2.5f;
+            _stuckX = p.x; _stuckZ = p.z; _stuckAcc = 0f; _pathAcc = 0f;
         }
         if (_ghostTimer > 0f) _ghostTimer -= dt;
 

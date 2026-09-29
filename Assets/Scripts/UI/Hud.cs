@@ -245,7 +245,7 @@ public class Hud : MonoBehaviour {
                 float dy = (y / (float)(N - 1)) * 2f - 1f;
                 // Elliptical falloff: screens are wider than they are tall.
                 float d = Mathf.Sqrt(dx * dx * 0.72f + dy * dy);
-                float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 1.05f, d));
+                float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.60f, 1.20f, d));
                 px[y * N + x] = new Color(1f, 1f, 1f, a);
             }
         }
@@ -627,7 +627,9 @@ public class Hud : MonoBehaviour {
         // Also rises as health falls, so being nearly dead is legible without watching the bar.
         float hurt = 1f - Mathf.Clamp01(s.Hp / Mathf.Max(1f, s.MaxHp));
         float flash = Mathf.Max(0f, s.DamageFlashTimer / 0.2f);
-        vc.a = Mathf.Clamp01(flash * 0.55f + Mathf.Max(0f, hurt - 0.6f) * 0.9f);
+        // Only the last quarter of the health bar tints at all, and never past half opacity:
+        // this is a warning at the edge of vision, not a filter over the game.
+        vc.a = Mathf.Min(0.62f, flash * 0.5f + Mathf.Max(0f, hurt - 0.75f) * 1.2f);
         _damageVignette.color = vc;
     }
 

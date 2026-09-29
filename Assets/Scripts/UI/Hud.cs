@@ -195,7 +195,11 @@ public class Hud : MonoBehaviour {
         }
 
         _damageVignette = Img("DamageFlash", _canvas.transform, Vector2.zero, Vector2.one,
-                              Vector2.zero, Vector2.zero, new Color(1f, 0f, 0f, 0f));
+                              Vector2.zero, Vector2.zero, new Color(1f, 0.1f, 0.1f, 0f));
+        // A radial mask, not a flat fill. A full-screen red tint over the whole frame is what v2
+        // deliberately avoids with a radial gradient: it hides the fight you are trying to survive.
+        _damageVignette.sprite = BuildVignetteSprite();
+        _damageVignette.type = Image.Type.Simple;
 
         BuildCrosshair();
         BuildTopBlock();
@@ -225,6 +229,29 @@ public class Hud : MonoBehaviour {
 
         Guide = new HelpGuide(this);
         Guide.Build();
+    }
+
+    /// <summary>
+    /// Clear in the middle, opaque at the corners. Generated rather than shipped: it is a gradient,
+    /// and a 128 px one costs nothing next to another texture in the build.
+    /// </summary>
+    static Sprite BuildVignetteSprite() {
+        const int N = 128;
+        var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        var px = new Color[N * N];
+        for (int y = 0; y < N; y++) {
+            for (int x = 0; x < N; x++) {
+                float dx = (x / (float)(N - 1)) * 2f - 1f;
+                float dy = (y / (float)(N - 1)) * 2f - 1f;
+                // Elliptical falloff: screens are wider than they are tall.
+                float d = Mathf.Sqrt(dx * dx * 0.72f + dy * dy);
+                float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 1.05f, d));
+                px[y * N + x] = new Color(1f, 1f, 1f, a);
+            }
+        }
+        tex.SetPixels(px);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), 100f);
     }
 
     void BuildCrosshair() {
@@ -597,7 +624,10 @@ public class Hud : MonoBehaviour {
         _dashFill.color = ready >= 1f ? Cyan : new Color(Cyan.r, Cyan.g, Cyan.b, 0.3f);
 
         var vc = _damageVignette.color;
-        vc.a = Mathf.Max(0f, s.DamageFlashTimer / 0.2f) * 0.38f;
+        // Also rises as health falls, so being nearly dead is legible without watching the bar.
+        float hurt = 1f - Mathf.Clamp01(s.Hp / Mathf.Max(1f, s.MaxHp));
+        float flash = Mathf.Max(0f, s.DamageFlashTimer / 0.2f);
+        vc.a = Mathf.Clamp01(flash * 0.55f + Mathf.Max(0f, hurt - 0.6f) * 0.9f);
         _damageVignette.color = vc;
     }
 

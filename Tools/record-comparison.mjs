@@ -95,6 +95,11 @@ async function capture({ label, url, dir, onReady, drive }) {
 
   await client.send('Page.startScreencast', { format: 'jpeg', quality: 80, maxWidth: 1280, maxHeight: 720, everyNthFrame: 1 });
 
+  // Both games read mouse deltas from pointer lock. If a pane is not locked, its bot stares at
+  // the spawn point for the whole take and the recording measures the harness, not the game.
+  const locked = await page.evaluate(() => document.pointerLockElement !== null);
+  console.log(`[${label}] pointer lock: ${locked ? 'ENGAGED' : 'NOT ENGAGED - bot cannot aim'}`);
+
   const t0 = Date.now();
   await drive(page, () => Date.now() - t0 < SECONDS * 1000);
 
@@ -135,7 +140,14 @@ async function botLoop(page, stillRunning, restart) {
   let tick = 0;
   while (stillRunning()) {
     const t = Date.now() / 1000;
-    await page.mouse.move(640 + Math.sin(t * 0.9) * 300, 360 + Math.sin(t * 0.37) * 40);
+    // Aim BELOW the horizon, not at it. The player's eye is at 1.7 m and a Gnat is 1.25 m tall,
+    // so a level shot sails clean over the head of the most common enemy in the game - the bot
+    // fires all take and kills nothing, and the tape then reads as though the GAME is slow.
+    // UFO.Tests.SmokeTests.Weapons_All_Fire_And_Damage documents the same trap. At 75 deg FOV
+    // over 720 px a 1 m drop is ~46 px at 12 m and ~28 px at 20 m, so a band centred 38 px low
+    // sweeps through where short enemies actually stand. Both panes get it, so the comparison
+    // still measures the games rather than the harness.
+    await page.mouse.move(640 + Math.sin(t * 0.9) * 300, 398 + Math.sin(t * 0.37) * 26);
     await page.mouse.down();
     await sleep(90);
     await page.mouse.up();

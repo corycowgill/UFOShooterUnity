@@ -741,7 +741,9 @@ public class LevelBuilder : MonoBehaviour {
 
                 foreach (var (nx, nz) in new[] { (0f, 1f), (0f, -1f), (1f, 0f), (-1f, 0f) }) {
                     float tx = -nz, tz = nx;
-                    float ex = cx + nx * 16.6f, ez = cz + nz * 16.6f;
+                    // A metre back off the kerb: the tree line still reads, but the canopies stop
+                    // closing over the street sightlines the player actually fights down.
+                    float ex = cx + nx * 15.4f, ez = cz + nz * 15.4f;
                     foreach (var t in new[] { -10.5f, 10.5f }) {
                         float x = ex + tx * t, z = ez + tz * t;
                         if (Mathf.Abs(x) > 82f || Mathf.Abs(z) > 82f) continue;
@@ -820,9 +822,13 @@ public class LevelBuilder : MonoBehaviour {
 
         // -- The park: the centre block is a plaza with a tree ring and benches facing in.
         if (_def.Lake == null || OnLand(B + 2f)) {
-            for (int k = 0; k < 8; k++) {
-                float a = k * Mathf.PI / 4f + Mathf.PI / 8f;
-                Put("tree", Mathf.Cos(a) * 12.5f, Mathf.Sin(a) * 12.5f, Rnd() * 360f, 1.0f + Rnd() * 0.2f);
+            // Six trees at 17 m rather than eight at 12.5 m, and a little smaller. The player
+            // spawns in the middle of this ring and looks out through it, so the radius is really
+            // a decision about how much of their first view is trunk. At 12.5 m two canopies sat
+            // either side of the sightline to the mothership and ate a third of the frame.
+            for (int k = 0; k < 6; k++) {
+                float a = k * Mathf.PI / 3f + Mathf.PI / 6f;
+                Put("tree", Mathf.Cos(a) * 17f, Mathf.Sin(a) * 17f, Rnd() * 360f, 0.82f + Rnd() * 0.16f);
             }
             for (int k = 0; k < 6; k++) {
                 float a = k * Mathf.PI / 3f;

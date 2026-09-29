@@ -112,7 +112,12 @@ await page.screenshot({ path: path.join(OUT, '03-after-start.png') });
 
 // Play. Aliens drop in 30-55 m out and converge, so this sweeps the view around and holds the
 // trigger, capturing frames across the whole first wave rather than one arbitrary instant.
-await page.mouse.move(640, 400);
+// A slight downward bias only. Level fire sails over a 1.25 m Gnat from a 1.7 m eye, so a bot
+// aimed exactly at the horizon never kills anything - but these frames exist to be LOOKED at,
+// and pitching far enough down to fight fills them with pavement. record-comparison.mjs is the
+// tool that needs to land shots and it drops much further; this one just needs to not stare at
+// the sky. (The same aim-height trap is called out in SmokeTests.Weapons_All_Fire_And_Damage.)
+await page.mouse.move(640, 424);
 // A stationary bot is dead inside twenty seconds, and the later frames were all game-over
 // screens - which quietly poisoned every measurement taken from them. So: capture early and
 // often, and keep moving between shots.
@@ -121,7 +126,7 @@ for (let shot = 0; shot < 4; shot++) {
   const t = Date.now();
   const dwell = shot === 0 ? 2500 : 5000;
   while (Date.now() - t < dwell) {
-    await page.mouse.move(640 + Math.sin(Date.now() / 1100) * 260, 400);
+    await page.mouse.move(640 + Math.sin(Date.now() / 1100) * 260, 424);
     await page.mouse.down();
     await sleep(110);
     await page.mouse.up();

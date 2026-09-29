@@ -322,35 +322,44 @@ public class Hud : MonoBehaviour {
     }
 
     void BuildWeaponPanel() {
+        // Stacked and centred, the way v2 composes it: icon, then name, then the ammo count.
+        // The flat right-aligned strip this replaced put the three at the same scale on one line,
+        // which is fine to read at leisure and poor to read mid-fight - a firefight gives you a
+        // glance, and a vertical stack with one dominant number resolves in one.
         _weaponRoot = Panel("WeaponPanel", _canvas.transform, new Vector2(1, 0), new Vector2(1, 0),
-                            new Vector2(-470f, 34f), new Vector2(-40f, 168f), PanelBg);
+                            new Vector2(-300f, 34f), new Vector2(-40f, 250f), PanelBg);
         Bracket(_weaponRoot, new Color(Cyan.r, Cyan.g, Cyan.b, 0.8f), 18f, 2f);
 
         // v2's panel carries a silhouette of the weapon, sliced from a 2x2 sheet in the order
         // the arsenal is listed: rifle, plasma, sword, rocket.
         _weaponSprites = LoadWeaponSprites();
-        _weaponIcon = Img("WeaponIcon", _weaponRoot, new Vector2(0, 0), new Vector2(0, 0),
-                          new Vector2(16f, 74f), new Vector2(132f, 122f), new Color(1f, 1f, 1f, 0.95f));
+        _weaponIcon = Img("WeaponIcon", _weaponRoot, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                          new Vector2(-58f, -68f), new Vector2(58f, -12f), new Color(1f, 1f, 1f, 0.95f));
         _weaponIcon.preserveAspect = true;
 
-        _weaponName = Label("WeaponName", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0),
-                            new Vector2(140f, 74f), new Vector2(-16f, 112f), 28, TextAnchor.MiddleRight, Cyan);
-        _ammoText = Label("Ammo", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0),
-                          new Vector2(16f, 34f), new Vector2(-16f, 72f), 28, TextAnchor.MiddleRight, NeonGreen, false);
-        _grenadeText = Label("Grenades", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0),
-                             new Vector2(16f, 10f), new Vector2(-16f, 32f), 17, TextAnchor.MiddleRight, Dim, false);
+        _weaponName = Label("WeaponName", _weaponRoot, new Vector2(0, 1), new Vector2(1, 1),
+                            new Vector2(10f, -104f), new Vector2(-10f, -72f), 22, TextAnchor.MiddleCenter, Cyan);
 
-        Img("ReloadBg", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0), new Vector2(16f, 66f), new Vector2(-16f, 70f),
+        // Reload and heat sit between the name and the number, so a state change lands in the
+        // same glance as the count it constrains.
+        Img("ReloadBg", _weaponRoot, new Vector2(0, 1), new Vector2(1, 1), new Vector2(20f, -115f), new Vector2(-20f, -110f),
             new Color(0f, 0f, 0f, 0.6f));
-        _reloadFill = Img("ReloadFill", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0), new Vector2(16f, 66f), new Vector2(-16f, 70f),
+        _reloadFill = Img("ReloadFill", _weaponRoot, new Vector2(0, 1), new Vector2(1, 1), new Vector2(20f, -115f), new Vector2(-20f, -110f),
                           Cyan);
         _reloadFill.type = Image.Type.Filled;
         _reloadFill.fillMethod = Image.FillMethod.Horizontal;
 
-        _heatFill = Img("HeatFill", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0), new Vector2(16f, 60f), new Vector2(-16f, 64f),
+        _heatFill = Img("HeatFill", _weaponRoot, new Vector2(0, 1), new Vector2(1, 1), new Vector2(20f, -124f), new Vector2(-20f, -119f),
                         new Color(1f, 0.5f, 0.15f));
         _heatFill.type = Image.Type.Filled;
         _heatFill.fillMethod = Image.FillMethod.Horizontal;
+
+        // The one number worth reading at a glance, so it gets the size.
+        _ammoText = Label("Ammo", _weaponRoot, new Vector2(0, 1), new Vector2(1, 1),
+                          new Vector2(10f, -172f), new Vector2(-10f, -130f), 34, TextAnchor.MiddleCenter, NeonGreen, false);
+
+        _grenadeText = Label("Grenades", _weaponRoot, new Vector2(0, 0), new Vector2(1, 0),
+                             new Vector2(10f, 10f), new Vector2(-10f, 32f), 16, TextAnchor.MiddleCenter, Dim, false);
     }
 
     /// <summary>
@@ -359,7 +368,7 @@ public class Hud : MonoBehaviour {
     /// </summary>
     void BuildRadar() {
         _radarRoot = Panel("Radar", _canvas.transform, new Vector2(1, 1), new Vector2(1, 1),
-                           new Vector2(-230f, -230f), new Vector2(-40f, -40f), new Color(0.01f, 0.05f, 0.03f, 0.55f));
+                           new Vector2(-268f, -268f), new Vector2(-40f, -40f), new Color(0.01f, 0.05f, 0.03f, 0.55f));
         Bracket(_radarRoot, new Color(NeonGreen.r, NeonGreen.g, NeonGreen.b, 0.85f), 16f, 2f);
 
         var title = Label("RadarTitle", _radarRoot, new Vector2(0, 1), new Vector2(1, 1),
@@ -374,7 +383,7 @@ public class Hud : MonoBehaviour {
 
         // The player: a fixed pip at centre. The radar is player-relative and rotates with them.
         Img("self", _radarRoot, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(-2.5f, -2.5f), new Vector2(2.5f, 2.5f), NeonGreen);
+            new Vector2(-3f, -3f), new Vector2(3f, 3f), NeonGreen);
     }
 
     void BuildBossBar() {
@@ -689,7 +698,9 @@ public class Hud : MonoBehaviour {
             float nz = Mathf.Clamp(rz / RadarRange, -1f, 1f) * 0.45f;
             var rt = blip.rectTransform;
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f + nx, 0.5f + nz);
-            float size = e.IsBoss ? 6f : (e.Elite ? 5f : 3.5f);
+            // Sized against the 228 px radar, not the 190 px one it replaced: a blip that keeps its
+            // pixel size when the dial grows reads as a smaller contact.
+            float size = e.IsBoss ? 7.5f : (e.Elite ? 6f : 4.5f);
             rt.offsetMin = new Vector2(-size, -size);
             rt.offsetMax = new Vector2(size, size);
             blip.color = e.IsBoss ? new Color(1f, 0.3f, 0.95f)

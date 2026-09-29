@@ -43,6 +43,7 @@ crashlytics-build.properties
 # Capture and audit output (regenerate with Tools/verify-web.mjs and the PlayMode suites)
 /shots/
 /shots-v2/
+/shots-aim/
 /shots-layout/
 /results.xml
 /layout.xml

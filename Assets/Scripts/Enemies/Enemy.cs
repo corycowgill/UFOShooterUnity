@@ -58,7 +58,6 @@ public class Enemy : MonoBehaviour {
     EnemyAnimator _anim;
     Transform _shieldFx;
     readonly List<Material> _materials = new List<Material>();
-    static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
     static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
 
     // ---- diagnostics (read by the AI/animation audit) ----
@@ -103,6 +102,7 @@ public class Enemy : MonoBehaviour {
 
         BuildModel();
         BuildShieldFx();
+        BuildThreatLight();
         Ready = true;
     }
 
@@ -124,10 +124,6 @@ public class Enemy : MonoBehaviour {
             for (int i = 0; i < mats.Length; i++) {
                 if (mats[i] == null) continue;
                 _materials.Add(mats[i]);
-                if (Elite) {
-                    mats[i].EnableKeyword("_EMISSION");
-                    mats[i].SetColor(EmissionColor, new Color(1f, 0.67f, 0f) * 0.35f);
-                }
             }
             r.materials = mats;
         }
@@ -437,16 +433,64 @@ public class Enemy : MonoBehaviour {
     // ------------------------------------------------------------------ update
 
     /// <summary>Returns true when the corpse should be removed.</summary>
+    /// <summary>
+    /// A small faction-coloured light carried by every alien.
+    ///
+    /// Measured from the player's eye at the range these roles actually hold, an enemy read at
+    /// luminance 75 against a city background of 84 - DARKER than the parked cars and lit
+    /// shopfronts behind it. The thing shooting at you was the least visible object in the frame.
+    ///
+    /// The obvious fix - tint the model's emission - cannot work here. These models arrive
+    /// through glTFast on "Shader Graphs/glTF-pbrMetallicRoughness", and a runtime write to that
+    /// material is retained but never rendered: setting baseColorFactor to pure magenta reads
+    /// back as magenta and draws unchanged orange. That also means the elite highlight below has
+    /// never actually been visible, and neither has the hit flash.
+    ///
+    /// A light renders no matter what the material does. It lifts the silhouette, it pools on the
+    /// pavement underneath, and at night that reads as the aliens carrying their own glow rather
+    /// than as a gameplay marker pasted over them.
+    /// </summary>
+    public const float ThreatLightIntensity = 1.6f;
+
+    /// <summary>Sweep hook for CombatShots, the way LevelBuilder.AmbientScaleOverride works.</summary>
+    public static float ThreatLightOverride = -1f;
+
+    static float LightK => ThreatLightOverride >= 0f ? ThreatLightOverride : ThreatLightIntensity;
+
+    Light _threatLight;
+    float _lightBase;
+    Color _lightColor;
+
+    void BuildThreatLight() {
+        var go = new GameObject("ThreatLight");
+        go.transform.SetParent(transform, false);
+        // Chest height: low enough to catch the ground, high enough not to be swallowed by it.
+        go.transform.localPosition = new Vector3(0f, Data.Height * 0.55f, 0f);
+
+        _threatLight = go.AddComponent<Light>();
+        _threatLight.type = LightType.Point;
+        // Elites burn amber and brighter, which is the distinction the dead emission code was
+        // trying and failing to draw.
+        _threatLight.color = Elite ? new Color(1f, 0.67f, 0f) : Data.Color;
+        _threatLight.intensity = LightK * (Elite ? 1.8f : 1f) * (IsBoss ? 2.2f : 1f);
+        _threatLight.range = Mathf.Max(3.5f, Data.Height * 2.6f);
+        _threatLight.shadows = LightShadows.None;   // 40+ lights already; these must stay cheap
+        _threatLight.renderMode = LightRenderMode.ForceVertex;
+
+        _lightBase = _threatLight.intensity;
+        _lightColor = _threatLight.color;
+    }
+
     public bool Tick(float dt, Vector3 playerPos, Vector3 playerVel) {
+        // Hit feedback rides the threat light. It used to flash the model's emission, which on a
+        // glTFast material is a write that lands and never renders - so until now, shooting one
+        // of these produced no visual response at all beyond its health going down.
         if (_hitFlash > 0f) {
             _hitFlash -= dt;
-            float k = _hitFlash > 0f ? 1f : 0f;
-            for (int i = 0; i < _materials.Count; i++) {
-                var m = _materials[i];
-                if (m == null) continue;
-                m.EnableKeyword("_EMISSION");
-                m.SetColor(EmissionColor, k > 0f ? new Color(1f, 0.6f, 0.3f) * 0.9f
-                            : (Elite ? new Color(1f, 0.67f, 0f) * 0.35f : Color.black));
+            if (_threatLight != null) {
+                float k = Mathf.Clamp01(_hitFlash / 0.12f);
+                _threatLight.intensity = _lightBase * (1f + 3.5f * k);
+                _threatLight.color = Color.Lerp(_lightColor, new Color(1f, 0.85f, 0.65f), k);
             }
         }
 

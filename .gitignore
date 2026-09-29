@@ -50,6 +50,11 @@ crashlytics-build.properties
 /audit.xml
 /ai.xml
 /calib.xml
+/combat.xml
+/sweep.xml
 /shots-calib/
+/shots-combat/
+/shots-build/
+/.bwprofile/
 /video-work/
 *.mp4

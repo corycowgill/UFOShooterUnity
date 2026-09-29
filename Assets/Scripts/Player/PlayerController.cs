@@ -27,6 +27,8 @@ public class PlayerController : MonoBehaviour {
     public float Sensitivity = 0.002f;
     public float GamepadLookSpeed = 2.6f;
     public float MaxPitch = 89f;
+    /// <summary>Set from GameSettings. Flips vertical look for players who expect flight-sim axes.</summary>
+    public bool InvertY = false;
 
     public Camera Cam;
     public Arena Arena;
@@ -98,14 +100,14 @@ public class PlayerController : MonoBehaviour {
             float mx = Input.GetAxisRaw("Mouse X") * 10f;
             float my = Input.GetAxisRaw("Mouse Y") * 10f;
             _yaw += mx * Sensitivity * Mathf.Rad2Deg;
-            _pitch -= my * Sensitivity * Mathf.Rad2Deg;
+            _pitch -= my * Sensitivity * Mathf.Rad2Deg * (InvertY ? -1f : 1f);
         }
         // Right stick. Dead zone kept generous; WebGL gamepad axes are noisy.
         float gx = AxisDead(InputMap.RightStickX, 0.18f);
         float gy = AxisDead(InputMap.RightStickY, 0.18f);
         if (gx != 0f || gy != 0f) {
             _yaw += gx * GamepadLookSpeed * 60f * dt;
-            _pitch -= gy * GamepadLookSpeed * 60f * dt;
+            _pitch -= gy * GamepadLookSpeed * 60f * dt * (InvertY ? -1f : 1f);
         }
         _pitch = Mathf.Clamp(_pitch, -MaxPitch, MaxPitch);
     }

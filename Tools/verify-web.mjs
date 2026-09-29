@@ -87,6 +87,22 @@ await sleep(2500);
 await page.screenshot({ path: path.join(OUT, '02-title.png') });
 console.log('  captured title screen');
 
+// The settings screen, opened from the title. Buttons are drawn inside the canvas, so these are
+// real clicks at their screen positions.
+await page.mouse.click(640, 522);            // FIELD GUIDE, third button
+await sleep(900);
+await page.screenshot({ path: path.join(OUT, '02c-guide.png') });
+console.log('  captured field guide');
+await page.keyboard.press('Escape');
+await sleep(500);
+
+await page.mouse.click(640, 457);            // SETTINGS, just under START
+await sleep(900);
+await page.screenshot({ path: path.join(OUT, '02b-settings.png') });
+console.log('  captured settings screen');
+await page.keyboard.press('Escape');
+await sleep(600);
+
 // Click START. It is a uGUI button drawn inside the canvas, so this is a real click at the
 // button's screen position - there is no DOM node to query. At 1280x800 with the CanvasScaler
 // set to a 1920x1080 reference and match 0.5, it lands just below centre.

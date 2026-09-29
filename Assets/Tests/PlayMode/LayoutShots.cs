@@ -76,6 +76,9 @@ public class LayoutShots {
 
         for (int li = 0; li < LevelData.Levels.Length; li++) {
             _game.Level.Build(li);
+            // Weather is normally configured by GameManager.LoadLevel; building the level
+            // directly bypasses it, and River North without its rain is the wrong picture.
+            _game.Weather.Configure(LevelData.Levels[li].Weather, _game.Player.Cam.transform);
             for (int i = 0; i < 3; i++) yield return null;
 
             var def = LevelData.Levels[li];
@@ -99,7 +102,15 @@ public class LayoutShots {
             cam.transform.rotation = Quaternion.LookRotation(new Vector3(1f, -0.45f, 1f).normalized, Vector3.up);
             Capture(cam, $"{li}-{slug}-aerial.png", 1400, 800);
 
-            Debug.Log($"[Shots] {def.Name}: plan, plan-close, aerial");
+            // One eye-level frame per level: the plan views cannot show weather or lighting.
+            cam.fieldOfView = 75f;
+            cam.transform.position = new Vector3(0f, 1.7f, 4f);
+            cam.transform.rotation = Quaternion.Euler(2f, 200f, 0f);
+            float dwell = 0f;
+            while (dwell < 1.4f) { dwell += Time.deltaTime; yield return null; }
+            Capture(cam, $"{li}-{slug}-eye.png", 1280, 800);
+
+            Debug.Log($"[Shots] {def.Name}: plan, plan-close, aerial, eye ({def.Weather})");
         }
         Object.DestroyImmediate(cam.gameObject);
     }

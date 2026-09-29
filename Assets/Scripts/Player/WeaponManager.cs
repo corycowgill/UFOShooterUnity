@@ -44,6 +44,9 @@ public class WeaponManager : MonoBehaviour {
     public int Grenades { get; private set; } = 3;
     public bool Zoomed { get; private set; }
 
+    /// <summary>Hip-fire field of view, owned by GameSettings; zoom interpolates away from it.</summary>
+    public float BaseFov = 75f;
+
     readonly Dictionary<string, WeaponState> _state = new Dictionary<string, WeaponState>();
     readonly Dictionary<string, GameObject> _viewmodels = new Dictionary<string, GameObject>();
 
@@ -509,6 +512,10 @@ public class WeaponManager : MonoBehaviour {
             Vector3 pos = p.T.position;
 
             // Ground / wall
+            if (!dead && pos.y <= 0.05f && !p.Bounce) {
+                OnWallHit?.Invoke(new Vector3(pos.x, 0.02f, pos.z), Vector3.up,
+                                  p.Kind == "rocket" ? "blast" : "plasma");
+            }
             if (!dead && pos.y <= 0.05f) {
                 if (p.Bounce && p.Life > 0.15f) {
                     pos.y = 0.05f;
@@ -519,7 +526,13 @@ public class WeaponManager : MonoBehaviour {
             }
             if (!dead && Arena != null && Arena.PointInSolid(pos)) {
                 if (p.Bounce) { p.T.position = prev; p.Vel = Vector3.Reflect(p.Vel, Vector3.up) * 0.4f; }
-                else dead = true;
+                else {
+                    dead = true;
+                    // Mark the wall the plasma or rocket actually hit.
+                    var dir = p.Vel.sqrMagnitude > 1e-4f ? p.Vel.normalized : Vector3.forward;
+                    Arena.RayWall(prev, dir, (pos - prev).magnitude + 1f, out var wp, out var wn);
+                    OnWallHit?.Invoke(wp, wn, p.Kind == "rocket" ? "blast" : "plasma");
+                }
             }
 
             // Direct enemy contact (rockets and plasma only)
@@ -610,7 +623,7 @@ public class WeaponManager : MonoBehaviour {
 
         // Field of view breathes with the zoom.
         if (Cam != null) {
-            float wantFov = zoom > 0.5f ? 45f : 75f;
+            float wantFov = zoom > 0.5f ? BaseFov * 0.6f : BaseFov;
             Cam.fieldOfView = Mathf.Lerp(Cam.fieldOfView, wantFov, 1f - Mathf.Exp(-12f * dt));
         }
     }

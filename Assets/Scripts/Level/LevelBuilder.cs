@@ -116,7 +116,10 @@ public class LevelBuilder : MonoBehaviour {
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = Col(L.FogColor);
-        RenderSettings.fogDensity = L.FogDensity;
+        // The level owns the base density; the player's Fog setting scales it, so a level change
+        // does not silently undo their choice.
+        GameSettings.Instance.BaseFogDensity = L.FogDensity;
+        RenderSettings.fogDensity = L.FogDensity * GameSettings.Instance.FogScale;
 
         if (Sun != null) {
             Sun.color = Col(L.SunColor);
@@ -267,6 +270,13 @@ public class LevelBuilder : MonoBehaviour {
                 var r = w.GetComponent<Renderer>();
                 r.material = walkMat;
                 r.receiveShadows = true;
+
+                // Walkable, not an obstacle: at 0.18 m it is under the step threshold both the
+                // player sweep and the enemy sweep use, so it lifts the ground instead of blocking.
+                Arena.Add(new ArenaBox(
+                    new Vector3(x - slab * 0.5f, 0f, z - slab * 0.5f),
+                    new Vector3(x + slab * 0.5f, 0.18f, z + slab * 0.5f),
+                    soft: true));
             }
         }
 
@@ -870,7 +880,9 @@ public class LevelBuilder : MonoBehaviour {
 
         for (int gx = -2; gx <= 2; gx++) {
             for (int gz = -2; gz <= 2; gz++) {
-                if ((gx + gz) % 2 != 0) continue;
+                // Every corner, not every other one: 13 lamps over 25 blocks left most of the
+                // grid lit only by ambient, which is why the road kept measuring dark.
+                _ = gx;
                 float x = gx * LevelData.Pitch + LevelData.Pitch / 2f;
                 float z = gz * LevelData.Pitch + LevelData.Pitch / 2f;
                 if (!OnLand(x)) continue;
@@ -881,10 +893,10 @@ public class LevelBuilder : MonoBehaviour {
                 var l = lightGo.AddComponent<Light>();
                 l.type = LightType.Point;
                 l.color = new Color(1f, 0.91f, 0.69f);
-                l.range = 30f;
+                l.range = 34f;
                 // At night the street is lit by lamps, not the moon: this is most of the gap
                 // between v3's road and v2's reference reading.
-                l.intensity = 5.5f;
+                l.intensity = 6.5f;
                 l.shadows = LightShadows.None;
 
                 var pole = Prim.Create(PrimKind.Cylinder, "LampPole", _root.transform);

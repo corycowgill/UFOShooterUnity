@@ -29,6 +29,16 @@ public class Hud : MonoBehaviour {
     static readonly Color Dim = new Color(0.62f, 0.86f, 0.95f, 0.65f);
     static readonly Color PanelBg = new Color(0.02f, 0.08f, 0.11f, 0.55f);
 
+    // Shared with SettingsPanel so the two screens cannot drift apart visually.
+    public static Color CyanColor => Cyan;
+    public static Color NeonGreenColor => NeonGreen;
+    public static Color DimColor => Dim;
+    public static Color AmberColor => Amber;
+    public static Color DangerColor => Danger;
+
+    public SettingsPanel Settings { get; private set; }
+    public HelpGuide Guide { get; private set; }
+
     Canvas _canvas;
     Font _font, _fontBold;
 
@@ -89,7 +99,7 @@ public class Hud : MonoBehaviour {
 
     // ------------------------------------------------------------------ helpers
 
-    RectTransform Panel(string name, Transform parent, Vector2 aMin, Vector2 aMax,
+    public RectTransform Panel(string name, Transform parent, Vector2 aMin, Vector2 aMax,
                         Vector2 oMin, Vector2 oMax, Color bg) {
         var go = new GameObject(name);
         go.transform.SetParent(parent != null ? parent : _canvas.transform, false);
@@ -103,7 +113,7 @@ public class Hud : MonoBehaviour {
         return rt;
     }
 
-    Image Img(string name, Transform parent, Vector2 aMin, Vector2 aMax,
+    public Image Img(string name, Transform parent, Vector2 aMin, Vector2 aMax,
               Vector2 oMin, Vector2 oMax, Color c) {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -119,7 +129,7 @@ public class Hud : MonoBehaviour {
     /// A HUD label. `glow` adds an outline in the text's own colour, which is what sells the neon
     /// look on a legacy Text component - there is no bloom on a screen-space overlay canvas.
     /// </summary>
-    Text Label(string name, Transform parent, Vector2 aMin, Vector2 aMax, Vector2 oMin, Vector2 oMax,
+    public Text Label(string name, Transform parent, Vector2 aMin, Vector2 aMax, Vector2 oMin, Vector2 oMax,
                int size, TextAnchor align, Color color, bool bold = true, bool glow = true) {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -149,7 +159,7 @@ public class Hud : MonoBehaviour {
     }
 
     /// <summary>Four 2px corner brackets - the frame v2 draws round its panels.</summary>
-    void Bracket(RectTransform parent, Color c, float len = 14f, float w = 2f) {
+    public void Bracket(RectTransform parent, Color c, float len = 14f, float w = 2f) {
         Img("bracket-tl-h", parent, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, -w), new Vector2(len, 0), c);
         Img("bracket-tl-v", parent, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, -len), new Vector2(w, 0), c);
         Img("bracket-tr-h", parent, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-len, -w), new Vector2(0, 0), c);
@@ -209,6 +219,12 @@ public class Hud : MonoBehaviour {
         _inGameOnly.Add(_feedRoot.gameObject);
 
         BuildMenus();
+
+        Settings = new SettingsPanel(this, GameSettings.Instance);
+        Settings.Build(_canvas.transform);
+
+        Guide = new HelpGuide(this);
+        Guide.Build();
     }
 
     void BuildCrosshair() {
@@ -382,7 +398,7 @@ public class Hud : MonoBehaviour {
 
     // ------------------------------------------------------------------ screens
 
-    GameObject Screen_(string name, Color bg) {
+    public GameObject MakeScreen(string name, Color bg) {
         var rt = Panel(name, _canvas.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, bg);
         var img = rt.GetComponent<Image>();
         if (img != null) img.raycastTarget = true;
@@ -390,7 +406,7 @@ public class Hud : MonoBehaviour {
         return rt.gameObject;
     }
 
-    Button Btn(Transform parent, string label, Vector2 anchor, Vector2 oMin, Vector2 oMax, System.Action onClick) {
+    public Button Btn(Transform parent, string label, Vector2 anchor, Vector2 oMin, Vector2 oMax, System.Action onClick) {
         var go = new GameObject("Btn_" + label);
         go.transform.SetParent(parent, false);
         var rt = go.AddComponent<RectTransform>();
@@ -413,7 +429,7 @@ public class Hud : MonoBehaviour {
     }
 
     void BuildMenus() {
-        _menuScreen = Screen_("MenuScreen", new Color(0.01f, 0.02f, 0.05f, 0.94f));
+        _menuScreen = MakeScreen("MenuScreen", new Color(0.01f, 0.02f, 0.05f, 0.94f));
         var title = Label("Title", _menuScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                           new Vector2(-700f, 130f), new Vector2(700f, 250f), 76, TextAnchor.MiddleCenter, Cyan);
         title.text = "UFO INVASION III";
@@ -421,21 +437,27 @@ public class Hud : MonoBehaviour {
                         new Vector2(-700f, 74f), new Vector2(700f, 124f), 24, TextAnchor.MiddleCenter, NeonGreen, false);
         sub.text = "// CHICAGO HAS FALLEN . HOLD THE LINE //";
         var help = Label("Help", _menuScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                         new Vector2(-700f, -280f), new Vector2(700f, -90f), 18, TextAnchor.UpperCenter, Dim, false, false);
+                         new Vector2(-700f, -370f), new Vector2(700f, -240f), 18, TextAnchor.UpperCenter, Dim, false, false);
         help.text = "WASD MOVE   .   MOUSE LOOK   .   LMB FIRE   .   RMB AIM / HEAVY\n" +
                     "1-4 WEAPONS   .   Q GRENADE   .   R RELOAD   .   SHIFT SPRINT   .   SPACE JUMP   .   E DASH\n\n" +
                     "PLASMA STRIPS SHIELDS  .  BULLETS HURT FLESH  .  ROCKETS SOLVE JUGGERNAUTS  .  THE SWORD LUNGES";
         Btn(_menuScreen.transform, "START", new Vector2(0.5f, 0.5f), new Vector2(-160f, -60f), new Vector2(160f, 4f),
             () => Game.StartGame());
+        Btn(_menuScreen.transform, "SETTINGS", new Vector2(0.5f, 0.5f), new Vector2(-160f, -132f), new Vector2(160f, -70f),
+            () => Settings.Open());
+        Btn(_menuScreen.transform, "FIELD GUIDE", new Vector2(0.5f, 0.5f), new Vector2(-160f, -204f), new Vector2(160f, -142f),
+            () => Guide.Open());
 
-        _pauseScreen = Screen_("PauseScreen", new Color(0.01f, 0.02f, 0.05f, 0.8f));
+        _pauseScreen = MakeScreen("PauseScreen", new Color(0.01f, 0.02f, 0.05f, 0.8f));
         var pt = Label("PausedTitle", _pauseScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                        new Vector2(-400f, 60f), new Vector2(400f, 160f), 58, TextAnchor.MiddleCenter, Cyan);
         pt.text = "[ PAUSED ]";
         Btn(_pauseScreen.transform, "RESUME", new Vector2(0.5f, 0.5f), new Vector2(-160f, -34f), new Vector2(160f, 30f),
             () => Game.TogglePause());
+        Btn(_pauseScreen.transform, "SETTINGS", new Vector2(0.5f, 0.5f), new Vector2(-160f, -106f), new Vector2(160f, -44f),
+            () => Settings.Open());
 
-        _gameOverScreen = Screen_("GameOverScreen", new Color(0.10f, 0.01f, 0.03f, 0.92f));
+        _gameOverScreen = MakeScreen("GameOverScreen", new Color(0.10f, 0.01f, 0.03f, 0.92f));
         var got = Label("GameOverTitle", _gameOverScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                         new Vector2(-600f, 120f), new Vector2(600f, 240f), 66, TextAnchor.MiddleCenter, Danger);
         got.text = "YOU ARE DOWN";
@@ -444,12 +466,20 @@ public class Hud : MonoBehaviour {
         Btn(_gameOverScreen.transform, "TRY AGAIN", new Vector2(0.5f, 0.5f), new Vector2(-180f, -74f), new Vector2(180f, -10f),
             () => Game.StartGame());
 
-        _perkScreen = Screen_("PerkScreen", new Color(0.01f, 0.03f, 0.07f, 0.88f));
+        _perkScreen = MakeScreen("PerkScreen", new Color(0.01f, 0.03f, 0.07f, 0.88f));
         var perkTitle = Label("PerkTitle", _perkScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                               new Vector2(-600f, 150f), new Vector2(600f, 230f), 40, TextAnchor.MiddleCenter, Cyan);
         perkTitle.text = "// CHOOSE AN UPGRADE //";
         _perkCards = Panel("PerkCards", _perkScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                            new Vector2(-680f, -120f), new Vector2(680f, 120f), Color.clear);
+    }
+
+    /// <summary>The menu/pause/game-over screen currently showing, if any.</summary>
+    public GameObject ActiveScreen() {
+        if (_menuScreen != null && _menuScreen.activeSelf) return _menuScreen;
+        if (_pauseScreen != null && _pauseScreen.activeSelf) return _pauseScreen;
+        if (_gameOverScreen != null && _gameOverScreen.activeSelf) return _gameOverScreen;
+        return null;
     }
 
     void ShowPerkCards() {
@@ -496,6 +526,8 @@ public class Hud : MonoBehaviour {
 
         if (Game.State != _lastState) {
             _lastState = Game.State;
+            if (Settings != null && Settings.IsOpen) Settings.Close();
+            if (Guide != null && Guide.IsOpen) Guide.Close();
             _menuScreen.SetActive(Game.State == GameState.Menu);
             _pauseScreen.SetActive(Game.State == GameState.Paused);
             _gameOverScreen.SetActive(Game.State == GameState.GameOver);

@@ -54,6 +54,7 @@ public class Enemy : MonoBehaviour {
     Vector3 _knockback;
 
     GameObject _model;
+    Vector3 _modelBaseScale = Vector3.one;
     EnemyAnimator _anim;
     Transform _shieldFx;
     readonly List<Material> _materials = new List<Material>();
@@ -131,6 +132,7 @@ public class Enemy : MonoBehaviour {
             r.materials = mats;
         }
 
+        _modelBaseScale = _model.transform.localScale;
         _anim = new EnemyAnimator(_model);
         _anim.Play(Clip.Idle, 0f);
     }
@@ -648,10 +650,19 @@ public class Enemy : MonoBehaviour {
                 if (dist < d.AttackRange && _attackCooldown <= 0f) Face(playerPos, dt, 10f);
                 else FaceHeading(dir, dt, 6f);
 
-                // Bank into the turn, relative to its own heading.
-                if (_model != null)
+                // Bank into the turn, and shudder: an insect drone that holds a rigid pose reads
+                // as a prop. There is no rig here, so the motion has to come from the transform.
+                if (_model != null) {
+                    float flutter = Mathf.Sin(_stateTime * 34f) * 1.6f;
+                    float bob = Mathf.Sin(_stateTime * 9f) * 0.9f;
                     _model.transform.localRotation = Quaternion.Euler(
-                        _diving ? 14f : 0f, ModelCache.ForwardYawOffset, -_strafeDir * 20f);
+                        (_diving ? 14f : 0f) + bob + flutter * 0.35f,
+                        ModelCache.ForwardYawOffset,
+                        -_strafeDir * 20f + flutter);
+                    var lp = _model.transform.localPosition;
+                    lp.y = Mathf.Sin(_stateTime * 11f) * 0.06f;
+                    _model.transform.localPosition = lp;
+                }
 
                 if (dist < d.AttackRange && _attackCooldown <= 0f) {
                     Shoot(playerPos, d.Damage, 32f, 0.04f, 0.7f, playerVel);
@@ -677,7 +688,17 @@ public class Enemy : MonoBehaviour {
                 p.y += (hover - p.y) * Mathf.Min(1f, 2f * dt);
                 transform.position = p;
 
-                if (_model != null) _model.transform.Rotate(Vector3.up, dt * 23f, Space.Self);
+                // The hull turns slowly and breathes: a 5 m boss that is perfectly rigid looks
+                // like scenery, and it is the one enemy the player stares at for a whole minute.
+                if (_model != null) {
+                    _model.transform.Rotate(Vector3.up, dt * 23f, Space.Self);
+                    float breathe = 1f + Mathf.Sin(_stateTime * 1.6f) * 0.02f;
+                    _model.transform.localScale = _modelBaseScale * breathe;
+                    _model.transform.localRotation = Quaternion.Euler(
+                        Mathf.Sin(_stateTime * 0.9f) * 2.5f,
+                        _model.transform.localEulerAngles.y,
+                        Mathf.Cos(_stateTime * 0.7f) * 2.5f);
+                }
 
                 if (dist < d.AttackRange && _attackCooldown <= 0f) {
                     Shoot(playerPos, d.Damage, 30f, 0.06f, 1.2f, playerVel);

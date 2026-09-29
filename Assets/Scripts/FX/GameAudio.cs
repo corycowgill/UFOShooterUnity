@@ -45,6 +45,13 @@ public class GameAudio : MonoBehaviour {
         _tracks = Resources.LoadAll<AudioClip>("Audio");
     }
 
+    /// <summary>Called by GameSettings so a volume slider is audible while it is being dragged.</summary>
+    public void ApplyVolumes(float sfx, float music) {
+        SfxVolume = Mathf.Clamp01(sfx);
+        MusicVolume = Mathf.Clamp01(music);
+        if (_music != null) _music.volume = MusicVolume;
+    }
+
     void Update() {
         if (_tracks != null && _tracks.Length > 0 && !_music.isPlaying) {
             _music.clip = _tracks[_track % _tracks.Length];

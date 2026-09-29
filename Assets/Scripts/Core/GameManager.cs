@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour {
     public GameAudio Audio { get; private set; }
     public EnemyProjectiles Bolts { get; private set; }
     public Hud Hud { get; private set; }
+    public Decals Decals { get; private set; }
+    public Weather Weather { get; private set; }
 
     public int LevelIndex { get; private set; }
 
@@ -79,9 +81,16 @@ public class GameManager : MonoBehaviour {
 
         Audio = gameObject.AddComponent<GameAudio>();
 
+        Decals = gameObject.AddComponent<Decals>();
+        Weather = gameObject.AddComponent<Weather>();
+
         Bolts = gameObject.AddComponent<EnemyProjectiles>();
         Bolts.Init(Arena, Fx);
-        Bolts.OnGroundHit = (pos, splash) => Fx.Impact(pos, new Color(0.6f, 0.3f, 1f), splash ? 2f : 0.5f);
+        Bolts.OnGroundHit = (pos, splash) => {
+            Fx.Impact(pos, new Color(0.6f, 0.3f, 1f), splash ? 2f : 0.5f);
+            // Alien plasma marks the road it misses you on.
+            Decals.Place(DecalKind.Scorch, new Vector3(pos.x, 0.02f, pos.z), Vector3.up, splash ? 3.4f : 1.1f);
+        };
 
         Level = gameObject.AddComponent<LevelBuilder>();
         Level.Arena = Arena;
@@ -109,8 +118,12 @@ public class GameManager : MonoBehaviour {
             float d = Vector3.Distance(Player.EyePosition, pos);
             if (d < radius) Stats.TakeDamage(60f * (1f - d / radius));
             Fx.Shake(0.25f, 0.4f);
+            Decals.Place(DecalKind.Scorch, new Vector3(pos.x, 0.02f, pos.z), Vector3.up, radius * 0.9f);
         };
-        Weapons.OnWallHit = (point, normal, kind) => { };
+        Weapons.OnWallHit = (point, normal, kind) => {
+            Decals.Place(kind == "plasma" ? DecalKind.Scorch : DecalKind.Bullet, point, normal,
+                         kind == "plasma" ? 0.9f : 0.28f);
+        };
 
         Stats.IsInvulnerable = () => Player != null && Player.Invulnerable;
         Stats.OnDamaged += (amount, shieldOnly) => {
@@ -120,6 +133,16 @@ public class GameManager : MonoBehaviour {
 
         Hud = gameObject.AddComponent<Hud>();
         Hud.Game = this;
+
+        // Settings are bound and applied before the first level builds, so a saved brightness or
+        // render scale is in force on the very first frame rather than snapping in a moment later.
+        var settings = GameSettings.Instance;
+        settings.Cam = _cam;
+        settings.Player = Player;
+        settings.Audio = Audio;
+        settings.Weapons = Weapons;
+        settings.Load();
+        settings.Apply();
     }
 
     void BuildRig() {
@@ -172,6 +195,8 @@ public class GameManager : MonoBehaviour {
         Weapons.ClearProjectiles();
 
         Level.Build(index);
+        Decals.Clear();
+        Weather.Configure(Level.Current != null ? Level.Current.Weather : "clear", _cam.transform);
         Waves.SetSpawnPoints(new List<Vector3>(Level.SpawnPoints));
         Player.Teleport(Level.PlayerStart, Level.PlayerStartYaw);
 
@@ -238,8 +263,24 @@ public class GameManager : MonoBehaviour {
     void Update() {
         float dt = Time.deltaTime;
 
+        // Tab opens the field guide from anywhere, including mid-fight - v2 binds it the same way.
+        if (InputMap.Guide && Hud != null && Hud.Guide != null) {
+            Hud.Guide.Toggle();
+            // Reading the bestiary should not mean being shot while you do it.
+            if (State == GameState.Playing) {
+                Player.InputEnabled = !Hud.Guide.IsOpen;
+                if (Hud.Guide.IsOpen) Player.Unlock(); else Player.Lock();
+            }
+        }
+
         if (InputMap.Pause) {
-            if (State == GameState.Menu) StartGame();
+            // The overlays sit on top of whatever is underneath, so Escape backs out of them first.
+            if (Hud != null && Hud.Guide != null && Hud.Guide.IsOpen) {
+                Hud.Guide.Close();
+                if (State == GameState.Playing) { Player.InputEnabled = true; Player.Lock(); }
+            }
+            else if (Hud != null && Hud.Settings != null && Hud.Settings.IsOpen) Hud.Settings.Close();
+            else if (State == GameState.Menu) StartGame();
             else if (State == GameState.GameOver) StartGame();
             else TogglePause();
         }
@@ -249,6 +290,7 @@ public class GameManager : MonoBehaviour {
             return;
         }
         if (State == GameState.Paused || State == GameState.PerkSelect || _loadingLevel) return;
+        if (Hud != null && Hud.Guide != null && Hud.Guide.IsOpen) return;
 
         // Multi-kill slow motion.
         if (_killTimeScaleTimer > 0f) {
@@ -380,6 +422,9 @@ public class GameManager : MonoBehaviour {
         Hud?.AddKillFeed(e.Data.Name,
             Arsenal.All.ContainsKey(hit.WeaponKey) ? Arsenal.Get(hit.WeaponKey).Name : "GRENADE");
         Fx.DeathEffect(e.transform.position, e.Data.Color, e.Data.Height * 0.5f);
+        if (e.Data.HoverHeight <= 0f)
+            Decals.Splatter(new Vector3(e.transform.position.x, 0.02f, e.transform.position.z),
+                            1.2f + e.Data.Height * 0.5f, e.IsBoss ? 6 : 3);
 
         float dropChance = PickupDropChance + (e.Data.Hp > 150f ? 0.2f : 0f) + Stats.DropRateBonus;
         if (e.Elite || e.IsBoss || Random.value < dropChance) {

@@ -38,6 +38,7 @@ public class Hud : MonoBehaviour {
 
     public SettingsPanel Settings { get; private set; }
     public HelpGuide Guide { get; private set; }
+    public TouchOverlay Touch { get; private set; }
 
     Canvas _canvas;
     Font _font, _fontBold;
@@ -229,6 +230,29 @@ public class Hud : MonoBehaviour {
 
         Guide = new HelpGuide(this);
         Guide.Build();
+
+        Touch = gameObject.AddComponent<TouchOverlay>();
+        Touch.Build(this, Game, _canvas.transform);
+        if (Platform.TouchPrimary) ReflowForTouch();
+    }
+
+    /// <summary>
+    /// Move every readout to the top of the screen.
+    ///
+    /// On desktop the vitals and the weapon panel sit in the bottom corners, which is exactly
+    /// where both thumbs live on a phone - the player would be covering their own health bar with
+    /// the hand they steer with. The radar stays put; nothing reaches the top right.
+    /// </summary>
+    void ReflowForTouch() {
+        Move(_weaponRoot, new Vector2(0, 1), new Vector2(40f, -240f), new Vector2(300f, -24f));
+        Move(_vitalsRoot, new Vector2(0, 1), new Vector2(40f, -348f), new Vector2(420f, -252f));
+        Move(_feedRoot, new Vector2(0.5f, 1), new Vector2(-256f, -320f), new Vector2(256f, -120f));
+    }
+
+    static void Move(RectTransform rt, Vector2 anchor, Vector2 oMin, Vector2 oMax) {
+        if (rt == null) return;
+        rt.anchorMin = anchor; rt.anchorMax = anchor;
+        rt.offsetMin = oMin; rt.offsetMax = oMax;
     }
 
     /// <summary>
@@ -474,9 +498,15 @@ public class Hud : MonoBehaviour {
         sub.text = "// CHICAGO HAS FALLEN . HOLD THE LINE //";
         var help = Label("Help", _menuScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                          new Vector2(-700f, -370f), new Vector2(700f, -240f), 18, TextAnchor.UpperCenter, Dim, false, false);
-        help.text = "WASD MOVE   .   MOUSE LOOK   .   LMB FIRE   .   RMB AIM / HEAVY\n" +
-                    "1-4 WEAPONS   .   Q GRENADE   .   R RELOAD   .   SHIFT SPRINT   .   SPACE JUMP   .   E DASH\n\n" +
-                    "PLASMA STRIPS SHIELDS  .  BULLETS HURT FLESH  .  ROCKETS SOLVE JUGGERNAUTS  .  THE SWORD LUNGES";
+        // A phone player has no WASD to be told about, and a keyboard legend is the first thing
+        // that makes a touch build feel like a desktop build somebody forgot to finish.
+        const string lore = "PLASMA STRIPS SHIELDS  .  BULLETS HURT FLESH  .  " +
+                            "ROCKETS SOLVE JUGGERNAUTS  .  THE SWORD LUNGES";
+        help.text = Platform.TouchPrimary
+            ? "LEFT STICK MOVE   .   DRAG TO LOOK   .   STICK TO THE RIM TO SPRINT\n" +
+              "FIRE  .  JUMP  .  DASH  .  RLD RELOAD  .  GRN GRENADE  .  1-4 WEAPONS\n\n" + lore
+            : "WASD MOVE   .   MOUSE LOOK   .   LMB FIRE   .   RMB AIM / HEAVY\n" +
+              "1-4 WEAPONS   .   Q GRENADE   .   R RELOAD   .   SHIFT SPRINT   .   SPACE JUMP   .   E DASH\n\n" + lore;
         Btn(_menuScreen.transform, "START", new Vector2(0.5f, 0.5f), new Vector2(-160f, -60f), new Vector2(160f, 4f),
             () => Game.StartGame());
         Btn(_menuScreen.transform, "SETTINGS", new Vector2(0.5f, 0.5f), new Vector2(-160f, -132f), new Vector2(160f, -70f),

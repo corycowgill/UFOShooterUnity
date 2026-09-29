@@ -63,9 +63,29 @@ public class GameSettings {
     /// <summary>Set by LevelBuilder each time a level loads, so FogScale has a base to scale.</summary>
     public float BaseFogDensity = 0.0048f;
 
+    /// <summary>
+    /// Defaults a phone can actually hold sixty frames at, applied BEFORE the saved preferences so
+    /// that anything the player has since chosen still wins.
+    ///
+    /// Render scale is the whole story. An iPhone reports a device pixel ratio of 3, so a 852x393
+    /// viewport asks the GPU for a 2556x1179 framebuffer - about 3.9x the pixels of the desktop
+    /// 1280x800 this was tuned on, on a far smaller GPU. Rendering at 0.6 and upscaling costs
+    /// roughly a third of that fill and is close to invisible at arm's length on a small screen.
+    ///
+    /// Shadows go from 90 m to 35 m for the same reason: the cascade covers a tiny fraction of the
+    /// screen on a phone and nobody is studying the far end of the street.
+    /// </summary>
+    void ApplyPlatformDefaults() {
+        if (!Platform.TouchPrimary) return;
+        RenderScale = 0.6f;
+        ShadowDistance = 35f;
+        Bloom = 0.45f;
+    }
+
     // ------------------------------------------------------------------ persistence
 
     public void Load() {
+        ApplyPlatformDefaults();
         Brightness      = PlayerPrefs.GetFloat(Prefix + "brightness", Brightness);
         Contrast        = PlayerPrefs.GetFloat(Prefix + "contrast", Contrast);
         Saturation      = PlayerPrefs.GetFloat(Prefix + "saturation", Saturation);
@@ -158,6 +178,15 @@ public class GameSettings {
         if (Player != null) {
             Player.Sensitivity = 0.002f * Mathf.Max(0.05f, LookSensitivity);
             Player.InvertY = InvertY;
+        }
+
+        // The same two settings drive drag-to-look. Without this the sensitivity slider moves and
+        // nothing happens on a phone, which reads as a broken settings screen rather than a
+        // control scheme that forgot to subscribe.
+        var hud = GameManager.Instance != null ? GameManager.Instance.Hud : null;
+        if (hud != null && hud.Touch != null) {
+            hud.Touch.SetSensitivity(0.16f * Mathf.Max(0.05f, LookSensitivity));
+            hud.Touch.SetInvertY(InvertY);
         }
 
         AudioListener.volume = Mathf.Clamp01(MasterVolume);

@@ -13,8 +13,12 @@ namespace UFO {
 public static class InputMap {
 
     // --- axes -------------------------------------------------------------
-    public static float LeftStickX  => Axis("Horizontal");
-    public static float LeftStickY  => Axis("Vertical");
+    // Touch is merged in here rather than handled anywhere downstream. The movement, firing and
+    // weapon code already copes with a gamepad, so presenting a finger as one more stick means
+    // none of it needs to learn that a touch scheme exists.
+    public static float LeftStickX  => Merge(Axis("Horizontal"), TouchState.Move.x);
+    public static float LeftStickY  => Merge(Axis("Vertical"),   TouchState.Move.y);
+
     public static float RightStickX => Axis("PadRightX");
     public static float RightStickY => Axis("PadRightY");
     public static float TriggerLeft  => Mathf.Max(0f, Axis("PadTriggerL"));
@@ -24,24 +28,29 @@ public static class InputMap {
         try { return Input.GetAxisRaw(name); } catch { return 0f; }
     }
 
+    static float Merge(float physical, float touch) {
+        if (!TouchState.Active) return physical;
+        return Mathf.Clamp(physical + touch, -1f, 1f);
+    }
+
     // --- buttons ----------------------------------------------------------
-    public static bool JumpPressed   => Input.GetKeyDown(KeyCode.JoystickButton0);
-    public static bool SprintHeld    => Input.GetKey(KeyCode.JoystickButton1);
+    public static bool JumpPressed   => Input.GetKeyDown(KeyCode.JoystickButton0) || TouchState.Jump;
+    public static bool SprintHeld    => Input.GetKey(KeyCode.JoystickButton1) || TouchState.Sprint;
     public static bool ReloadPressed => Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.JoystickButton2);
     public static bool GrenadePressed=> Input.GetKeyDown(KeyCode.JoystickButton3);
-    public static bool DashPressed   => Input.GetKeyDown(KeyCode.JoystickButton8);
+    public static bool DashPressed   => Input.GetKeyDown(KeyCode.JoystickButton8) || TouchState.Dash;
     public static bool PrevWeapon    => Input.GetKeyDown(KeyCode.JoystickButton4);
     public static bool NextWeapon    => Input.GetKeyDown(KeyCode.JoystickButton5);
     public static bool StartPressed  => Input.GetKeyDown(KeyCode.JoystickButton7);
 
     // --- combined (keyboard + pad) ----------------------------------------
-    public static bool FireHeld     => Input.GetMouseButton(0) || TriggerRight > 0.4f;
-    public static bool FirePressed  => Input.GetMouseButtonDown(0) || TriggerRightPressed;
+    public static bool FireHeld     => Input.GetMouseButton(0) || TriggerRight > 0.4f || TouchState.Fire;
+    public static bool FirePressed  => Input.GetMouseButtonDown(0) || TriggerRightPressed || TouchFireEdge;
     public static bool AltFirePressed => Input.GetMouseButtonDown(1) || TriggerLeftPressed;
 
-    public static bool Reload  => Input.GetKeyDown(KeyCode.R) || ReloadPressed;
-    public static bool Grenade => Input.GetKeyDown(KeyCode.Q) || GrenadePressed;
-    public static bool Pause   => Input.GetKeyDown(KeyCode.Escape) || StartPressed;
+    public static bool Reload  => Input.GetKeyDown(KeyCode.R) || ReloadPressed || TouchState.Reload;
+    public static bool Grenade => Input.GetKeyDown(KeyCode.Q) || GrenadePressed || TouchState.Grenade;
+    public static bool Pause   => Input.GetKeyDown(KeyCode.Escape) || StartPressed || TouchState.Pause;
     public static bool Guide   => Input.GetKeyDown(KeyCode.Tab);
 
     /// <summary>Weapon index 0-3 from the number row, or -1. Shoulder buttons cycle instead.</summary>
@@ -51,6 +60,7 @@ public static class InputMap {
             if (Input.GetKeyDown(KeyCode.Alpha2)) return 1;
             if (Input.GetKeyDown(KeyCode.Alpha3)) return 2;
             if (Input.GetKeyDown(KeyCode.Alpha4)) return 3;
+            if (TouchState.WeaponSlot >= 0) return TouchState.WeaponSlot;
             return -1;
         }
     }
@@ -73,6 +83,21 @@ public static class InputMap {
 
     static bool TriggerLeftPressed  { get { PumpEdges(); return _ltEdge; } }
     static bool TriggerRightPressed { get { PumpEdges(); return _rtEdge; } }
+
+    // The fire button reports "held"; the rising edge has to be found here, the same way the
+    // analog triggers are handled, so that a semi-automatic weapon fires once per tap.
+    static bool _fireWas, _fireEdge;
+    static int _fireFrame = -1;
+    static bool TouchFireEdge {
+        get {
+            if (_fireFrame != Time.frameCount) {
+                _fireFrame = Time.frameCount;
+                _fireEdge = TouchState.Fire && !_fireWas;
+                _fireWas = TouchState.Fire;
+            }
+            return _fireEdge;
+        }
+    }
 }
 
 }

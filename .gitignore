@@ -55,6 +55,9 @@ crashlytics-build.properties
 /shots-calib/
 /shots-combat/
 /shots-build/
+/shots-desktop/
+/shots-touch-portrait/
+/shots-touch/
 /.bwprofile/
 /video-work/
 *.mp4

@@ -43,7 +43,11 @@ public class PlayerController : MonoBehaviour {
     public Vector3 MoveDirection { get; private set; }
     public Vector3 Velocity { get; private set; }
     public float HorizontalSpeed { get; private set; }
-    public bool Locked => Cursor.lockState == CursorLockMode.Locked;
+    // On a touch device there is no pointer to lock - iOS Safari has no Pointer Lock API at all -
+    // so "am I in control of the view" has to mean something else there, or look never runs.
+    public bool Locked => Platform.TouchPrimary
+        ? InputEnabled
+        : Cursor.lockState == CursorLockMode.Locked;
 
     float _yaw, _pitch;
     float _headBobPhase, _headBobAmount;
@@ -79,8 +83,15 @@ public class PlayerController : MonoBehaviour {
         ApplyLook();
     }
 
-    public void Lock() { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
-    public void Unlock() { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+    public void Lock() {
+        if (Platform.TouchPrimary) return;   // nothing to lock, and asking throws on some browsers
+        Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false;
+    }
+
+    public void Unlock() {
+        if (Platform.TouchPrimary) return;
+        Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
+    }
 
     /// <summary>Driven from GameManager so the whole sim advances on one clock.</summary>
     public void Tick(float dt) {
@@ -95,12 +106,22 @@ public class PlayerController : MonoBehaviour {
     }
 
     void ReadLook(float dt) {
-        if (Locked) {
+        if (Locked && !Platform.TouchPrimary) {
             // Raw mouse delta, matched to the web build's 0.002 rad/px.
             float mx = Input.GetAxisRaw("Mouse X") * 10f;
             float my = Input.GetAxisRaw("Mouse Y") * 10f;
             _yaw += mx * Sensitivity * Mathf.Rad2Deg;
             _pitch -= my * Sensitivity * Mathf.Rad2Deg * (InvertY ? -1f : 1f);
+        }
+
+        // Drag-to-look. Already in degrees and already frame-independent - it is a distance the
+        // finger moved, not a rate - so unlike the stick below it must NOT be scaled by dt.
+        if (TouchState.Active) {
+            var d = TouchState.LookDelta;
+            if (d.sqrMagnitude > 0f) {
+                _yaw += d.x;
+                _pitch -= d.y * (InvertY ? -1f : 1f);
+            }
         }
         // Right stick. Dead zone kept generous; WebGL gamepad axes are noisy.
         float gx = AxisDead(InputMap.RightStickX, 0.18f);

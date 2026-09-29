@@ -71,6 +71,7 @@ public class GameManager : MonoBehaviour {
     void Awake() {
         Instance = this;
         Application.targetFrameRate = 60;
+        Platform.ApplyUrlOverrides();
 
         Arena = new Arena();
         Stats = new PlayerStats();
@@ -273,6 +274,10 @@ public class GameManager : MonoBehaviour {
     void Update() {
         float dt = Time.deltaTime;
 
+        // Publish the finger BEFORE anything reads input this frame.
+        if (Hud != null && Hud.Touch != null) Hud.Touch.Tick();
+        if (Platform.Diagnostics) TickDiagnostics(dt);
+
         // Tab opens the field guide from anywhere, including mid-fight - v2 binds it the same way.
         if (InputMap.Guide && Hud != null && Hud.Guide != null) {
             Hud.Guide.Toggle();
@@ -372,6 +377,23 @@ public class GameManager : MonoBehaviour {
         var w = Weapons.Weapon;
         bool wantFire = w.Auto ? InputMap.FireHeld : InputMap.FirePressed;
         if (wantFire && Weapons.Fire(Waves.Enemies)) Hud?.NotifyFired();
+    }
+
+    /// <summary>
+    /// Narrate input and player state once a second under ?diag=1. Exists so the touch harness can
+    /// assert that a drag actually turned the view rather than just that a widget was hit.
+    /// </summary>
+    float _diagTimer;
+    void TickDiagnostics(float dt) {
+        _diagTimer += dt;
+        if (_diagTimer < 1f) return;
+        _diagTimer = 0f;
+        var p = Player != null ? Player.transform.position : Vector3.zero;
+        var fwd = Player != null ? Player.transform.forward : Vector3.forward;
+        Debug.Log($"[DIAG] state={State} touch={TouchState.Active} " +
+                  $"pos=({p.x:F2},{p.z:F2}) yaw={Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg:F1} " +
+                  $"move=({TouchState.Move.x:F2},{TouchState.Move.y:F2}) fire={TouchState.Fire} " +
+                  $"hp={(Stats != null ? Stats.Hp : 0f):F0}");
     }
 
     void UpdateFootsteps(float dt) {

@@ -50,3 +50,5 @@ crashlytics-build.properties
 /ai.xml
 /calib.xml
 /shots-calib/
+/video-work/
+*.mp4

@@ -183,6 +183,22 @@ sweeps the view while firing, and fails on any console error. `measure-frame.mjs
 screenshot into numbers (mean luminance and standard deviation per region), which is how you tell
 "too bright" from "not rendering" without guessing.
 
+### Cameras created in code have post-processing OFF
+
+URP sets `renderPostProcessing = false` on any camera built from script. The game camera is built
+from script, so for a long stretch the shipped build ran with **no tonemapping, bloom, vignette or
+colour grading at all** — and the entire display group in the settings screen was inert, because
+the Volume it writes to was never sampled. The capture suites had the same problem, so frames
+judged from them were missing the post stack too.
+
+If a build looks flat, or a Volume override appears to do nothing, check this first:
+
+```csharp
+var camData = cam.GetUniversalAdditionalCameraData();
+camData.renderPostProcessing = true;
+camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+```
+
 **Pass `--gpu` whenever you are judging how a frame looks.** Without it the harness runs on
 SwiftShader, Chrome's software GL. SwiftShader proves the game boots, but it renders large flat
 surfaces with tile seams and collapses their shading to a single flat colour — a textured asphalt
@@ -190,6 +206,38 @@ street comes back with a luminance standard deviation of exactly **0.0**. That r
 like a lighting or material bug in the game, and it cost several rebuilds chasing a renderer
 artifact. On D3D11 the same frame measures sd 2.9 and shows the texture. If a surface looks
 impossibly flat, re-render with `--gpu` before changing any material code.
+
+---
+
+## Comparing against v2
+
+```bash
+node Tools/capture-v2.mjs                       # stills from the real v2 build
+node Tools/record-comparison.mjs --seconds 225  # side-by-side video, v2 | v3
+```
+
+`record-comparison.mjs` serves both builds, drives them with the *same* scripted bot from the same
+starting wave, captures each with a CDP screencast, and cuts them side by side with ffmpeg.
+
+Frame timing comes from the screencast metadata rather than being assumed. A screencast does not
+deliver a fixed rate, and assembling its frames at a constant fps is what makes a recording play
+back fast or slow; each pane gets an ffmpeg concat list with real per-frame durations instead.
+
+`drawtext` needs an explicit `fontfile` on Windows — without one it falls back to fontconfig,
+finds no config, and crashes rather than failing gracefully.
+
+---
+
+## Calibrating the look
+
+```bash
+Unity -batchmode -runTests -testPlatform PlayMode -testFilter UFO.Tests.LightCalibration
+```
+
+Renders the same frame across a sweep of one parameter in a single run, so a lighting decision is
+made by measuring rather than by rebuilding and squinting. It is how the plaza gap was finally
+closed: the sweep showed **ambient was a weak lever** (0.45 → 1.20 moved the plaza only 70 → 83
+against v2's 112) and that exposure was the real difference.
 
 ---
 

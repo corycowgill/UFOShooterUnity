@@ -117,6 +117,67 @@ public class AiAudit {
         Debug.Log(sb.ToString());
     }
 
+    /// <summary>
+    /// Do ground enemies actually stand on the ground?
+    ///
+    /// They are walked across the dressed city - past benches, planters and parked cars - and the
+    /// gap between the bottom of the model and the surface under it is measured every frame. Any
+    /// persistent positive gap is the enemy standing on top of a prop rather than walking round it.
+    /// </summary>
+    [UnityTest]
+    public IEnumerator Report_Foot_Contact() {
+        _game.StartGame();
+        yield return null;
+        _game.Waves.Cleanup();
+        yield return null;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("\n===== FOOT CONTACT =====  ground enemies only, 14 s each");
+        sb.AppendLine($"{"type",-12} {"worst gap",10} {"mean gap",10} {"frames > 0.15 m",16}");
+
+        foreach (var key in new[] { "gnat", "skirmisher", "warlord", "juggernaut" }) {
+            // Start out among the street furniture rather than on clean pavement.
+            var e = _game.Waves.SpawnAt(key, new Vector3(26f, 0f, 30f), false, false);
+            Assert.IsNotNull(e, key);
+            for (int i = 0; i < 4; i++) yield return null;
+
+            float worst = 0f, sum = 0f;
+            int n = 0, bad = 0, t = 0;
+            while (t < 14 * 60 && e != null && !e.Dead) {
+                float dt = Time.deltaTime;
+                _game.Waves.Tick(dt, _game.Player.EyePosition, Vector3.zero);
+                _game.Bolts.Tick(dt, _game.Player.EyePosition);
+                yield return null;
+                t++;
+                if (e == null) break;
+
+                var rs = e.GetComponentsInChildren<Renderer>();
+                if (rs.Length == 0) continue;
+                var b = rs[0].bounds;
+                for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
+
+                // Everything walks on y = 0 except the raised pavement slabs.
+                float surface = 0f;
+                foreach (var box in _game.Arena.Boxes) {
+                    if (!box.walkable) continue;
+                    var p2 = e.transform.position;
+                    if (p2.x > box.min.x && p2.x < box.max.x && p2.z > box.min.z && p2.z < box.max.z)
+                        surface = Mathf.Max(surface, box.max.y);
+                }
+
+                float gap = b.min.y - surface;
+                worst = Mathf.Max(worst, gap);
+                sum += gap; n++;
+                if (gap > 0.15f) bad++;
+            }
+
+            sb.AppendLine($"{key,-12} {worst,10:F2} {(n > 0 ? sum / n : 0f),10:F2} {bad + " / " + n,16}");
+            if (e != null) _game.Waves.Despawn(e);
+            yield return null;
+        }
+        Debug.Log(sb.ToString());
+    }
+
     /// <summary>What the rigs can actually play, independent of whether the AI drives them.</summary>
     [UnityTest]
     public IEnumerator Report_Rig_Clips() {

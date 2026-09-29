@@ -240,9 +240,9 @@ public class PlayerController : MonoBehaviour {
         var boxes = Arena.Boxes;
         for (int i = 0; i < boxes.Count; i++) {
             var b = boxes[i];
-            if (!b.isWater && x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z) {
-                if (b.max.y > best && b.max.y < 6f) best = b.max.y;
-            }
+            // Walkable only: otherwise every bench and parked car becomes a platform.
+            if (!b.walkable) continue;
+            if (x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z && b.max.y > best) best = b.max.y;
         }
         return best;
     }

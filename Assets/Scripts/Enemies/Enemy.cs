@@ -372,13 +372,18 @@ public class Enemy : MonoBehaviour {
         transform.position = p;
     }
 
+    /// <summary>
+    /// Walking height at a point. Only surfaces marked walkable count: every low prop collider
+    /// used to qualify, so a Gnat crossing a bench or a parked car was lifted on top of it and
+    /// appeared to hover over the street.
+    /// </summary>
     float GroundAt(float x, float z) {
         float best = 0f;
         var boxes = Ctx.Arena.Boxes;
         for (int i = 0; i < boxes.Count; i++) {
             var b = boxes[i];
-            if (!b.isWater && x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z
-                && b.max.y > best && b.max.y < 6f) best = b.max.y;
+            if (!b.walkable) continue;
+            if (x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z && b.max.y > best) best = b.max.y;
         }
         return best;
     }

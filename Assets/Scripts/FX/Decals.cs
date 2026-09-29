@@ -53,17 +53,23 @@ public class Decals : MonoBehaviour {
         _ => "blood",
     };
 
+    /// <summary>
+    /// Near-white. These sheets are finished artwork - tan concrete craters, a blue plasma burn,
+    /// magenta splatter - so the tint only sets opacity and a little darkening to sit them into
+    /// the night. An earlier version multiplied the bullet sheet by 0.06 and rendered every impact
+    /// as a black blob.
+    /// </summary>
     static Color TintFor(DecalKind kind) => kind switch {
-        DecalKind.Bullet => new Color(0.06f, 0.06f, 0.07f, 0.95f),
-        DecalKind.Scorch => new Color(0.10f, 0.08f, 0.07f, 0.9f),
-        // v2's aliens bleed violet; it has to read against wet asphalt at night.
-        _ => new Color(0.62f, 0.25f, 0.95f, 0.85f),
+        DecalKind.Bullet => new Color(0.82f, 0.82f, 0.84f, 1f),
+        DecalKind.Scorch => new Color(0.95f, 0.95f, 1f, 0.95f),
+        _ => new Color(1f, 0.95f, 1f, 0.9f),
     };
 
     Decal NewDecal(DecalKind kind, Texture2D tex) {
         var go = Prim.Create(PrimKind.Quad, kind + "Decal", _root);
         go.SetActive(false);
 
+        // One material per pooled decal: they each hold their own UV window into the sheet.
         var mat = Prim.Unlit();
         Fx.MakeTransparent(mat);
         if (tex != null) {
@@ -101,6 +107,15 @@ public class Decals : MonoBehaviour {
         d.T.rotation = Quaternion.LookRotation(-normal, Vector3.up)
                      * Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
         d.T.localScale = Vector3.one * size * Random.Range(0.8f, 1.25f);
+
+        // Pick one of the four variants on the sheet. Without this the quad shows the entire 2x2
+        // grid, which is what made every impact look like a cluster of identical holes.
+        int q = Random.Range(0, 4);
+        var offset = new Vector2((q % 2) * 0.5f, (q / 2) * 0.5f);
+        d.M.SetTextureScale("_BaseMap", new Vector2(0.5f, 0.5f));
+        d.M.SetTextureOffset("_BaseMap", offset);
+        d.M.mainTextureScale = new Vector2(0.5f, 0.5f);
+        d.M.mainTextureOffset = offset;
 
         d.Start = TintFor(kind);
         SetColor(d.M, d.Start);

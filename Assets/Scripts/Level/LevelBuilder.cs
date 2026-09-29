@@ -283,7 +283,7 @@ public class LevelBuilder : MonoBehaviour {
                 Arena.Add(new ArenaBox(
                     new Vector3(x - slab * 0.5f, 0f, z - slab * 0.5f),
                     new Vector3(x + slab * 0.5f, 0.18f, z + slab * 0.5f),
-                    soft: true));
+                    soft: true, walkable: true));
             }
         }
 
@@ -408,6 +408,12 @@ public class LevelBuilder : MonoBehaviour {
         var dr = deck.GetComponent<Renderer>();
         dr.material = dm;
         dr.receiveShadows = true;
+
+        // The pier deck is the one other surface you stand on rather than walk around.
+        Arena.Add(new ArenaBox(
+            new Vector3(lake.X, 0f, lake.PierZ0),
+            new Vector3(lake.PierXEnd, 0.2f, lake.PierZ1),
+            soft: true, walkable: true));
     }
 
     // ---------------------------------------------------------------- placement

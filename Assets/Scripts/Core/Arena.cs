@@ -14,9 +14,16 @@ public struct ArenaBox {
     public Vector3 min, max;
     public bool soft;
     public bool isWater;
+    /// <summary>
+    /// A surface that raises the walking height - pavement, the pier deck. Everything else is an
+    /// obstacle, however low: a bench is something to walk around, not something to stand on top
+    /// of, and treating every short collider as ground is what made enemies hover over the street
+    /// furniture.
+    /// </summary>
+    public bool walkable;
 
-    public ArenaBox(Vector3 min, Vector3 max, bool soft = false, bool isWater = false) {
-        this.min = min; this.max = max; this.soft = soft; this.isWater = isWater;
+    public ArenaBox(Vector3 min, Vector3 max, bool soft = false, bool isWater = false, bool walkable = false) {
+        this.min = min; this.max = max; this.soft = soft; this.isWater = isWater; this.walkable = walkable;
     }
 
     public static ArenaBox FromCenter(Vector3 center, Vector3 size, bool soft = false, bool isWater = false) {

@@ -56,7 +56,10 @@ public static class Arsenal {
             Key = "energySword", Name = "ENERGY SWORD", Kind = WeaponKind.Melee, ModelName = "energy_sword",
             Damage = 140, FireRate = 0.6f, Range = 3.8f, Lunge = 7.5f, Arc = 0.85f,
             Auto = false, Headshot = 1.0f, ShieldMul = 1.6f,
-            Pos = new Vector3(0.34f, -0.3f, 0.45f), Rot = new Vector3(8.6f, -104.3f, 5.7f), Scale = 0.65f,
+            // Scale is applied to the longest dimension, and a sword is mostly blade, so it needs
+            // a smaller number than the guns to end up the same size on screen. Held in closer and
+            // angled up across the view so the blade is visible rather than tucked into a corner.
+            Pos = new Vector3(0.19f, -0.19f, 0.40f), Rot = new Vector3(0f, -90f, 38f), Scale = 0.62f,
             Muzzle = new Vector3(0, 0, 0.5f), Color = C(0x60c0ff),
         },
         ["rocketLauncher"] = new WeaponDef {

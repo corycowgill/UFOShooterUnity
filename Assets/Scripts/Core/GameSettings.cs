@@ -26,10 +26,10 @@ public class GameSettings {
     public static GameSettings Instance { get; private set; } = new GameSettings();
 
     // ---- display ----------------------------------------------------------
-    public float Brightness = 0.05f;    // post exposure, EV
+    public float Brightness = 0.55f;    // post exposure, EV, set by the calibration sweep
     public float Contrast = 8f;
     public float Saturation = 6f;
-    public float Bloom = 0.9f;
+    public float Bloom = 0.75f;
     public float Vignette = 0.28f;
     public float FogScale = 1f;         // multiplier on the level's own fog density
 

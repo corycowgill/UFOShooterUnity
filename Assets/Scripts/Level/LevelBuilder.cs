@@ -30,7 +30,14 @@ public class LevelBuilder : MonoBehaviour {
     // factors are the whole calibration, so the per-level colour relationships stay intact.
     // Raised from 0.30 after the sky fix. The original value was chosen while a fogged sky dome
     // was blowing the scene out, so it was compensating for a bug rather than calibrating light.
-    const float AmbientScale = 0.45f;
+    const float AmbientScale = 0.60f;
+
+    /// <summary>
+    /// Calibration hook: a negative value means "use the constant". Exists so the ambient level can
+    /// be swept and measured in one run rather than guessed at across several rebuilds.
+    /// </summary>
+    public static float AmbientScaleOverride = -1f;
+    static float Ambient => AmbientScaleOverride >= 0f ? AmbientScaleOverride : AmbientScale;
     const float SunScale = 0.60f;
 
     // Trellis bakes daylight into the albedo. v2 pulls buildings to 0.42 and vehicles to 0.6 so
@@ -109,9 +116,9 @@ public class LevelBuilder : MonoBehaviour {
     void BuildLighting() {
         var L = _def;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-        RenderSettings.ambientSkyColor = Col(L.HemiSky) * (L.HemiIntensity * AmbientScale);
-        RenderSettings.ambientEquatorColor = Col(L.Ambient) * (L.AmbientIntensity * AmbientScale);
-        RenderSettings.ambientGroundColor = Col(L.HemiGround) * (L.HemiIntensity * AmbientScale);
+        RenderSettings.ambientSkyColor = Col(L.HemiSky) * (L.HemiIntensity * Ambient);
+        RenderSettings.ambientEquatorColor = Col(L.Ambient) * (L.AmbientIntensity * Ambient);
+        RenderSettings.ambientGroundColor = Col(L.HemiGround) * (L.HemiIntensity * Ambient);
 
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -253,7 +260,7 @@ public class LevelBuilder : MonoBehaviour {
             }
             walkMat.mainTexture = walkTex;
             walkMat.mainTextureScale = new Vector2(LevelData.Block / 3f, LevelData.Block / 3f);
-            if (walkMat.HasProperty("_BaseColor")) walkMat.SetColor("_BaseColor", new Color(0.69f, 0.69f, 0.67f));
+            if (walkMat.HasProperty("_BaseColor")) walkMat.SetColor("_BaseColor", new Color(0.84f, 0.84f, 0.81f));
         } else if (walkMat.HasProperty("_BaseColor")) {
             walkMat.SetColor("_BaseColor", new Color(0.43f, 0.43f, 0.42f));
         }
@@ -439,6 +446,7 @@ public class LevelBuilder : MonoBehaviour {
 
         if (o.IsBuilding) {
             GradeMaterials(obj, BuildingAlbedo, 0.75f, 0.15f);
+            LightWindows(obj);
             // Fill the block: widen toward the block size, capped so facades do not smear.
             if (o.Footprint > 0f && ModelCache.LocalBounds(obj, out var bb)) {
                 float want = o.Footprint - 6f;
@@ -479,6 +487,31 @@ public class LevelBuilder : MonoBehaviour {
             }
         }
         return 0f;
+    }
+
+    /// <summary>
+    /// Make the bright parts of a building's own texture emit. Windows light up; walls do not,
+    /// because their albedo is already dark. Bloom then picks the windows out against the night.
+    /// </summary>
+    static void LightWindows(GameObject go) {
+        foreach (var r in go.GetComponentsInChildren<Renderer>()) {
+            var mats = r.materials;
+            for (int i = 0; i < mats.Length; i++) {
+                var m = mats[i];
+                if (m == null || !m.HasProperty("_EmissionMap")) continue;
+                var map = m.HasProperty("_BaseMap") ? m.GetTexture("_BaseMap") : null;
+                if (map == null) continue;
+
+                m.EnableKeyword("_EMISSION");
+                // Runtime materials default to EmissiveIsBlack, which makes URP skip emission.
+                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                m.SetTexture("_EmissionMap", map);
+                // Slightly warm and dim: enough for the glass to read lit, not enough to make the
+                // whole facade a lamp.
+                m.SetColor("_EmissionColor", new Color(1f, 0.92f, 0.78f) * 0.55f);
+            }
+            r.materials = mats;
+        }
     }
 
     static bool IsVehicle(string key) =>

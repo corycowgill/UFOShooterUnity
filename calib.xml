@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.6725093">
+  <test-suite type="TestSuite" id="1029" name="UFO Invasion III" fullname="UFO Invasion III" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.672509" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1024" name="UFO.Tests.PlayMode.dll" fullname="C:/Users/coryc/ufoUnityShooter/Library/ScriptAssemblies/UFO.Tests.PlayMode.dll" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.666577" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="39272" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1025" name="UFO" fullname="UFO" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.666006" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1026" name="Tests" fullname="UFO.Tests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.665562" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1009" name="LightCalibration" fullname="UFO.Tests.LightCalibration" classname="UFO.Tests.LightCalibration" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:10Z" duration="2.664485" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1011" name="Sweep_Exposure" fullname="UFO.Tests.LightCalibration.Sweep_Exposure" methodname="Sweep_Exposure" classname="UFO.Tests.LightCalibration" runstate="Runnable" seed="1753443764" result="Passed" start-time="2026-09-29 03:01:07Z" end-time="2026-09-29 03:01:09Z" duration="2.656050" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[UFO] level=THE LOOP objects=886 renderers=851 colliders=725 spawns=16 lights=43 ambientSky=RGBA(0.206, 0.248, 0.373, 0.495) sun=0.96
+[UFO] player at (0.00, 1.70, 0.00) eye=(0.00, 1.70, 0.00) fov=75 near=0.05 far=600
+[UFO] level=THE LOOP objects=886 renderers=851 colliders=725 spawns=16 lights=43 ambientSky=RGBA(0.206, 0.248, 0.373, 0.495) sun=0.96
+[Calib] exposure 0.05 EV
+[Calib] exposure 0.45 EV
+[Calib] exposure 0.75 EV
+[Calib] exposure 1.05 EV
+[Calib] exposure 1.35 EV
+Saving results to: C:/Users/coryc/AppData/LocalLow/Cory Cowgill/UFO Invasion III\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

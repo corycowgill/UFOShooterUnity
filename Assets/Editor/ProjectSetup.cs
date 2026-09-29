@@ -52,6 +52,7 @@ public static class ProjectSetup {
             AssetDatabase.CreateAsset(renderer, rendererPath);
         }
         renderer.postProcessData = FindPostProcessData();
+        AddSsao(renderer);
 
         var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(pipelinePath);
         if (pipeline == null) {
@@ -62,9 +63,13 @@ public static class ProjectSetup {
         // WebGL-friendly defaults: one shadow cascade, modest shadow distance, HDR on for bloom.
         var so = new SerializedObject(pipeline);
         SetProp(so, "m_SupportsHDR", true);
-        SetProp(so, "m_MainLightShadowmapResolution", 1024);
+        SetProp(so, "m_MainLightShadowmapResolution", 2048);
         SetProp(so, "m_ShadowDistance", 90f);
-        SetProp(so, "m_ShadowCascadeCount", 1);
+        // Two cascades, not one: a single map stretched over 90 m leaves nothing sharp near the
+        // player, which is exactly where the props they are fighting around live.
+        SetProp(so, "m_ShadowCascadeCount", 2);
+        SetProp(so, "m_Cascade2Split", 0.18f);
+        SetProp(so, "m_SoftShadowsEnabled", true);
         SetProp(so, "m_MSAA", 1);                     // SMAA does the anti-aliasing instead
         SetProp(so, "m_SupportsCameraDepthTexture", true);
         SetProp(so, "m_SupportsCameraOpaqueTexture", false);
@@ -82,6 +87,44 @@ public static class ProjectSetup {
         EditorUtility.SetDirty(pipeline);
         AssetDatabase.SaveAssets();
         Debug.Log("[Setup] URP assets created and assigned");
+    }
+
+    /// <summary>
+    /// Attach URP's screen-space ambient occlusion feature to the renderer, if it is not already
+    /// there. Added through SerializedObject because the feature list and its id map are private:
+    /// the map has to stay in step with the list or the renderer drops the feature on reload.
+    /// </summary>
+    static void AddSsao(ScriptableRendererData rendererData) {
+        var ssaoType = System.Type.GetType(
+            "UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion, Unity.RenderPipelines.Universal.Runtime");
+        if (ssaoType == null) { Debug.LogWarning("[Setup] SSAO type not found; skipping"); return; }
+
+        foreach (var existing in rendererData.rendererFeatures)
+            if (existing != null && existing.GetType() == ssaoType) return;
+
+        var feature = ScriptableObject.CreateInstance(ssaoType) as ScriptableRendererFeature;
+        if (feature == null) { Debug.LogWarning("[Setup] could not create SSAO feature"); return; }
+        feature.name = "ScreenSpaceAmbientOcclusion";
+
+        AssetDatabase.AddObjectToAsset(feature, rendererData);
+        AssetDatabase.SaveAssets();
+
+        var so = new SerializedObject(rendererData);
+        var list = so.FindProperty("m_RendererFeatures");
+        var map = so.FindProperty("m_RendererFeatureMap");
+        if (list == null || map == null) { Debug.LogWarning("[Setup] renderer feature list not found"); return; }
+
+        list.arraySize++;
+        list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = feature;
+
+        AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out _, out long localId);
+        map.arraySize++;
+        map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
+
+        so.ApplyModifiedProperties();
+        EditorUtility.SetDirty(rendererData);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Setup] SSAO renderer feature added");
     }
 
     static PostProcessData FindPostProcessData() {
@@ -241,8 +284,9 @@ public static class ProjectSetup {
         tonemap.mode.value = TonemappingMode.ACES;
 
         var bloom = profile.Add<Bloom>(true);
-        bloom.intensity.overrideState = true;  bloom.intensity.value = 0.9f;
-        bloom.threshold.overrideState = true;  bloom.threshold.value = 0.85f;
+        bloom.intensity.overrideState = true;  bloom.intensity.value = 0.75f;
+        // Judged for the first time with post-processing actually enabled on the game camera.
+        bloom.threshold.overrideState = true;  bloom.threshold.value = 0.95f;
         bloom.scatter.overrideState = true;    bloom.scatter.value = 0.62f;
 
         var vignette = profile.Add<Vignette>(true);
@@ -253,7 +297,7 @@ public static class ProjectSetup {
         ca.intensity.overrideState = true; ca.intensity.value = 0.08f;
 
         var grade = profile.Add<ColorAdjustments>(true);
-        grade.postExposure.overrideState = true; grade.postExposure.value = 0.05f;
+        grade.postExposure.overrideState = true; grade.postExposure.value = 0.55f;
         grade.contrast.overrideState = true;     grade.contrast.value = 8f;
         grade.saturation.overrideState = true;   grade.saturation.value = 6f;
 

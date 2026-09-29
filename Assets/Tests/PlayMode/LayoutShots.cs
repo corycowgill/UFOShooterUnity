@@ -2,6 +2,7 @@ using System.Collections;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -46,6 +47,12 @@ public class LayoutShots {
         cam.clearFlags = CameraClearFlags.Skybox;
         cam.nearClipPlane = 0.3f;
         cam.farClipPlane = 900f;
+        // URP disables post-processing on any camera created in code, so a shot camera renders
+        // with no tonemapping, bloom, vignette or colour grading - nothing like what the player
+        // sees. Every frame judged from these suites before this was missing the whole post stack.
+        var data = cam.GetUniversalAdditionalCameraData();
+        data.renderPostProcessing = true;
+        data.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;
         return cam;
     }
 

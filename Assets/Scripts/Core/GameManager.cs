@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace UFO {
 
@@ -159,6 +160,15 @@ public class GameManager : MonoBehaviour {
         _cam.nearClipPlane = 0.05f;
         _cam.farClipPlane = 600f;
         camGo.AddComponent<AudioListener>();
+
+        // URP turns post-processing OFF by default on a camera created from script. Without this
+        // the whole Volume stack - tonemapping, bloom, vignette, colour grading - never runs, and
+        // the display settings have nothing to act on.
+        var camData = _cam.GetUniversalAdditionalCameraData();
+        camData.renderPostProcessing = true;
+        camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+        camData.antialiasingQuality = AntialiasingQuality.Medium;
+
         Player.Cam = _cam;
 
         var sunGo = new GameObject("Sun");

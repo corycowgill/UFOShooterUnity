@@ -484,6 +484,18 @@ public class Hud : MonoBehaviour {
         Btn(_menuScreen.transform, "FIELD GUIDE", new Vector2(0.5f, 0.5f), new Vector2(-160f, -204f), new Vector2(160f, -142f),
             () => Guide.Open());
 
+        // The build stamp, bottom right.
+        //
+        // Worth having on screen because the payload is cached "immutable": a returning player
+        // keeps the old build until the version changes, so when someone reports a bug that was
+        // supposedly fixed, this is the one thing that says whether they are actually running the
+        // fix. Application.version is PlayerSettings.bundleVersion, which Tools/build-web.sh
+        // derives from the commit - so it reads back as the commit that produced what they see.
+        var build = Label("BuildStamp", _menuScreen.transform, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                          new Vector2(-420f, 16f), new Vector2(-20f, 44f), 16, TextAnchor.LowerRight,
+                          new Color(Dim.r, Dim.g, Dim.b, 0.55f), false, false);
+        build.text = "BUILD " + Application.version;
+
         _pauseScreen = MakeScreen("PauseScreen", new Color(0.01f, 0.02f, 0.05f, 0.8f));
         var pt = Label("PausedTitle", _pauseScreen.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                        new Vector2(-400f, 60f), new Vector2(400f, 160f), 58, TextAnchor.MiddleCenter, Cyan);

@@ -93,6 +93,26 @@
       companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
       productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
       productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+
+      // Serve the payload from Unity's IndexedDB cache WITHOUT revalidating it.
+      //
+      // The default is "must-revalidate", and on this host that is the same as no cache at all:
+      // Unity revalidates with If-Modified-Since whenever the cached response carried a
+      // Last-Modified header, Render sends Last-Modified but honours only If-None-Match, and so
+      // every repeat visit answered 200 and re-downloaded the whole ~74 MB data file. Measured
+      // against the live site: first visit 79.8 MB, second visit 73.7 MB.
+      //
+      // "immutable" skips revalidation entirely and takes that to 0 bytes. The catch is that it
+      // means it: a new build at the same URL would NEVER be picked up, because the filenames are
+      // fixed (nameFilesAsHashes is off). What makes it safe is productVersion - Unity evicts any
+      // cache entry whose stored version differs from the current one, and BuildWebGL.cs stamps a
+      // fresh version into every build. index.html itself is never cached this way, so it always
+      // arrives carrying the new version, which is what triggers the eviction.
+      //
+      // Change one of those two things without the other and players get a permanently stale game.
+      cacheControl: function (url) {
+        return url.indexOf("Build/") >= 0 ? "immutable" : "no-store";
+      },
     }, function (progress) {
       bootFill.style.width = (progress * 100).toFixed(1) + "%";
     });

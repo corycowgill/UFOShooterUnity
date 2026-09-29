@@ -42,9 +42,24 @@ public static class BuildWebGL {
             options = development ? BuildOptions.Development : BuildOptions.None,
         };
 
-        Debug.Log($"[Build] WebGL -> {output} (development={development})");
+        // Stamp a version that changes whenever the content does.
+        //
+        // This is load-bearing, not cosmetic. The template marks the payload "immutable" so that
+        // returning players never re-download it, and the ONLY thing that can then invalidate a
+        // player's cached copy is productVersion: Unity prunes every IndexedDB entry whose stored
+        // version differs from the running one. A build that ships new content under an unchanged
+        // version is a build nobody who has played before will ever see.
+        //
+        // Restored immediately afterwards so a build does not leave ProjectSettings.asset dirty.
+        string stamp = ArgValue("-buildVersion");
+        string previousVersion = PlayerSettings.bundleVersion;
+        if (!string.IsNullOrEmpty(stamp)) PlayerSettings.bundleVersion = stamp;
+
+        Debug.Log($"[Build] WebGL -> {output} (development={development}) version={PlayerSettings.bundleVersion}");
         var report = BuildPipeline.BuildPlayer(options);
         var summary = report.summary;
+
+        if (!string.IsNullOrEmpty(stamp)) PlayerSettings.bundleVersion = previousVersion;
 
         Debug.Log($"[Build] result={summary.result} size={summary.totalSize / (1024 * 1024)}MB " +
                   $"time={summary.totalTime} errors={summary.totalErrors} warnings={summary.totalWarnings}");
@@ -86,6 +101,17 @@ browser do it natively instead:
 
 Getting step 3 wrong is the classic ""blank canvas"" failure, which is exactly why the fallback
 is on until someone opts into the faster path.
+
+## Caching
+
+`Build/*` is marked `immutable` in the template, so a returning player reads the payload out of
+IndexedDB and transfers nothing at all. The only thing that can invalidate that copy is the
+product version, which `Tools/build-web.sh` derives from the commit and passes as
+`-buildVersion`. Build through that script, or through anything else that passes the flag - a
+build that ships new content under an old version is one that returning players never see.
+
+`index.html` is deliberately excluded from this: it must stay revalidated, because it is what
+carries the new version to the browser in the first place.
 
 Local check, either way:
 

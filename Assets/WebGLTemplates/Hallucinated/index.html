@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <link rel="icon" href="data:,">
+  <style>
+    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
+    #unity-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      display: block; background: #000;
+      /* Hidden until the ident has finished AND the player is ready, so nobody
+         sees a half-built scene pop in behind the logo. */
+      opacity: 0; transition: opacity .45s ease;
+    }
+    #unity-canvas.ready { opacity: 1; }
+
+    /* Shown only in the gap between the ident ending and the player being
+       ready. On a warm cache that gap is zero and this never appears. */
+    #boot {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center; flex-direction: column;
+      background: #000; color: #cfe9ff; z-index: 10;
+      font: 14px/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .18em; text-transform: uppercase;
+    }
+    #boot.show { display: flex; }
+    #boot-bar { width: min(340px, 60vw); height: 2px; background: #16242e; margin-top: 18px; }
+    #boot-fill { width: 0%; height: 100%; background: #5bd8ff; transition: width .2s ease; }
+    #boot-err { color: #ff6b6b; max-width: 70ch; text-transform: none; letter-spacing: 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" width="{{{ WIDTH }}}" height="{{{ HEIGHT }}}" tabindex="-1"></canvas>
+
+  <div id="boot">
+    <div id="boot-msg">Loading</div>
+    <div id="boot-bar"><div id="boot-fill"></div></div>
+    <div id="boot-err"></div>
+  </div>
+
+  <!--
+    Studio ident. Classic script, loaded before anything else so the overlay can
+    attach on the first paint; it defines window.HallucinatedIntro.
+    Vendored from gameCentral/intro/hallucinated-intro.js - the same file
+    castleSurvivor and aliendigger play.
+  -->
+  <script src="TemplateData/hallucinated-intro.js"></script>
+
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var canvas = document.querySelector("#unity-canvas");
+    var boot = document.querySelector("#boot");
+    var bootFill = document.querySelector("#boot-fill");
+    var bootMsg = document.querySelector("#boot-msg");
+    var bootErr = document.querySelector("#boot-err");
+
+    // The ident and the download run CONCURRENTLY. A Unity WebGL build is tens
+    // of megabytes, so playing the logo first and then starting the download
+    // would add its 4.6s to the wait. Started together, the ident covers load
+    // time instead of adding to it, and the canvas is revealed when both are
+    // done - whichever finishes last.
+    var introDone = (function () {
+      try {
+        if (params.has("nointro") || params.has("debug") || !window.HallucinatedIntro) {
+          return Promise.resolve({ skipped: true });
+        }
+        return window.HallucinatedIntro.play({
+          skippable: true,
+          // A WebAudio sting needs a prior user gesture and a cold page load has
+          // none, so it would be dropped silently. Same call the other games make.
+          sound: false,
+        }).catch(function () { return { skipped: true }; });
+      } catch (e) {
+        return Promise.resolve({ skipped: true });
+      }
+    })();
+
+    var unityReady = createUnityInstance(canvas, {
+      arguments: [],
+      dataUrl: "Build/{{{ DATA_FILENAME }}}",
+      frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+      codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+    }, function (progress) {
+      bootFill.style.width = (progress * 100).toFixed(1) + "%";
+    });
+
+    // If the ident finishes first, show the modest progress bar for the rest.
+    introDone.then(function () {
+      var settled = false;
+      unityReady.then(function () { settled = true; }, function () { settled = true; });
+      // A microtask is enough to know whether the player was already up.
+      Promise.resolve().then(function () {
+        if (!settled) boot.classList.add("show");
+      });
+    });
+
+    Promise.all([introDone, unityReady]).then(function (results) {
+      boot.classList.remove("show");
+      canvas.classList.add("ready");
+      canvas.focus();
+      // Expose the instance for debugging and for any harness driving the page.
+      window.__unity = results[1];
+      window.__gameReady = true;
+    }).catch(function (message) {
+      boot.classList.add("show");
+      bootMsg.textContent = "Failed to load";
+      bootErr.textContent = String(message);
+      console.error("[UFO] load failed:", message);
+    });
+  })();
+  </script>
+</body>
+</html>

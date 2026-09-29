@@ -1,0 +1,50 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Generated
+results.xml
+*.csproj
+*.sln
+*.slnx
+*.unityproj
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Tooling: node_modules under Tools is a junction to alienGame's, never commit it
+/Tools/node_modules/
+
+# Crash reports
+sysinfo.txt
+crashlytics-build.properties
+
+# Burst build artefacts
+/Data/
+
+# Capture and audit output (regenerate with Tools/verify-web.mjs and the PlayMode suites)
+/shots/
+/shots-v2/
+/shots-layout/
+/results.xml
+/layout.xml
+/audit.xml
+/ai.xml

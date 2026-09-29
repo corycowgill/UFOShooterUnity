@@ -48,3 +48,5 @@ crashlytics-build.properties
 /layout.xml
 /audit.xml
 /ai.xml
+/calib.xml
+/shots-calib/

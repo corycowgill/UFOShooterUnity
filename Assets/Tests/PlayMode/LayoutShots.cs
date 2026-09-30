@@ -53,6 +53,12 @@ public class LayoutShots {
         var data = cam.GetUniversalAdditionalCameraData();
         data.renderPostProcessing = true;
         data.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+
+        // Effects that depend on where the viewer is - the particle near-fade, the emitters'
+        // distance culling - read Fx.Cam, which is the game camera. For a shot suite the shot
+        // camera IS the viewer, so point it here or every frame is judged against a viewpoint
+        // nobody is looking from.
+        if (_game != null && _game.Fx != null) _game.Fx.Cam = cam;
         return cam;
     }
 
@@ -133,29 +139,37 @@ public class LayoutShots {
 
         // A tour of the places a player actually stands: the plaza, a street, an intersection,
         // an alley, and the kerb beside the parked cars.
-        var stops = new (string name, Vector3 pos, float yaw)[] {
-            ("plaza-centre",   new Vector3(0f, 1.7f, 0f),     0f),
-            ("plaza-corner",   new Vector3(14f, 1.7f, 14f),   215f),
-            ("street-ns",      new Vector3(22f, 1.7f, 0f),    0f),
-            ("street-ew",      new Vector3(0f, 1.7f, 22f),    90f),
-            ("intersection",   new Vector3(22f, 1.7f, 22f),   225f),
-            ("alley",          new Vector3(59f, 1.7f, 56f),   180f),
-            ("kerb",           new Vector3(19f, 1.7f, 40f),   90f),
-            ("looking-north",  new Vector3(0f, 1.7f, 30f),    180f),
+        var stops = new (string name, Vector3 pos, float yaw, float pitch)[] {
+            ("plaza-centre",   new Vector3(0f, 1.7f, 0f),     0f,   4f),
+            ("plaza-corner",   new Vector3(14f, 1.7f, 14f),   215f, 4f),
+            ("street-ns",      new Vector3(22f, 1.7f, 0f),    0f,   4f),
+            ("street-ew",      new Vector3(0f, 1.7f, 22f),    90f,  4f),
+            ("intersection",   new Vector3(22f, 1.7f, 22f),   225f, 4f),
+            ("alley",          new Vector3(59f, 1.7f, 56f),   180f, 4f),
+            ("kerb",           new Vector3(19f, 1.7f, 40f),   90f,  4f),
+            ("looking-north",  new Vector3(0f, 1.7f, 30f),    180f, 4f),
             // The crash site and a burning wreck: the only places the fire VFX can be judged.
-            ("crash-site",     new Vector3(-16f, 1.7f, -34f), 25f),
-            ("fire",           new Vector3(-6f, 1.7f, -20f),  185f),
+            ("crash-site",     new Vector3(-16f, 1.7f, -34f), 25f,  4f),
+            ("fire",           new Vector3(-6f, 1.7f, -20f),  185f, 4f),
+            // Two stops that look UP. Everything above the shopfronts - rooflines, masts, water
+            // towers, wires, billboards and the sky itself - is invisible in a level-pitch frame,
+            // and it is half of what the player sees while backing away from something.
+            ("rooftops",       new Vector3(22f, 1.7f, -8f),   135f, -26f),
+            ("sky",            new Vector3(0f, 1.7f, 6f),     170f, -34f),
+            // Straight down at the road, from head height: the only way to see what the surface
+            // dressing actually is rather than what it looks like at a grazing angle.
+            ("road-close",     new Vector3(22f, 9f, -6f),     0f,   88f),
         };
 
-        foreach (var (name, pos, yaw) in stops) {
+        foreach (var (name, pos, yaw, pitch) in stops) {
             cam.transform.position = pos;
-            cam.transform.rotation = Quaternion.Euler(4f, yaw, 0f);
+            cam.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
             // Continuous effects need time on the clock to build up: capturing after three frames
             // catches roughly one flame puff and makes a working fire look like nothing at all.
             float t = 0f;
             while (t < 1.2f) { t += Time.deltaTime; yield return null; }
             Capture(cam, $"tour-{name}.png", 1280, 800);
-            Debug.Log($"[Shots] tour {name} at {pos} yaw {yaw}");
+            Debug.Log($"[Shots] tour {name} at {pos} yaw {yaw} pitch {pitch}");
         }
         Object.DestroyImmediate(cam.gameObject);
     }

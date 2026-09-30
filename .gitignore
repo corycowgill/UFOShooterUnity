@@ -47,6 +47,7 @@ crashlytics-build.properties
 /shots-layout/
 /results.xml
 /layout.xml
+/hands.xml
 /audit.xml
 /ai.xml
 /calib.xml
@@ -54,6 +55,7 @@ crashlytics-build.properties
 /sweep.xml
 /shots-calib/
 /shots-combat/
+/shots-hands/
 /shots-build/
 /shots-desktop/
 /shots-touch-portrait/

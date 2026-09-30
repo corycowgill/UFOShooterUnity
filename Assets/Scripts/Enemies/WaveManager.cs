@@ -103,7 +103,11 @@ public class WaveManager {
         if (w >= 5 && w % 5 == 0) _queue.Add(new Entry { Type = "overseer", IsBoss = true });
 
         HpMultiplier     = 1f + Mathf.Pow(w - 1, 1.12f) * 0.07f;
-        SpeedMultiplier  = 1f + (w - 1) * 0.03f;
+        // 0.02, down from v2's 0.03. HP and damage still scale on v2's curves; speed is the one
+        // that outruns the player rather than out-statting them, and by wave 15 the original put
+        // Skirmishers at 10.5 m/s against a 12 m/s walk - close enough that they could not be
+        // broken away from and could barely be led.
+        SpeedMultiplier  = 1f + (w - 1) * 0.02f;
         DamageMultiplier = 1f + Mathf.Pow(w - 1, 1.05f) * 0.035f;
 
         // Commanders spawn first so their squads form around them; shuffle the rest.

@@ -534,7 +534,11 @@ public class Enemy : MonoBehaviour {
             _noLos = Ctx.Arena.LineBlocked(eye, playerPos) ? _noLos + 0.5f : 0f;
         }
         bool hunting = Aggressive || _noLos > 2.5f;
-        float speed = d.Speed * _speedMul;
+        // The player's difficulty setting scales every enemy's movement, and only its movement:
+        // attack intervals, damage and health are untouched, so a slower roster is still the same
+        // fight rather than a weaker one.
+        float speed = d.Speed * _speedMul
+                    * (GameSettings.Instance != null ? GameSettings.Instance.EnemySpeed : 1f);
         bool moved = false; float moveSpeed = 0f;
 
         switch (d.Role) {

@@ -44,7 +44,7 @@ public class SettingsPanel {
 
         // Two columns: four groups is too tall for 1080p in one.
         BuildColumn(new[] { "DISPLAY", "PERFORMANCE" }, -470f);
-        BuildColumn(new[] { "CONTROLS", "AUDIO" }, 40f);
+        BuildColumn(new[] { "CONTROLS", "DIFFICULTY", "AUDIO" }, 40f);
 
         _hud.Btn(_root.transform, "RESET", new Vector2(0.5f, 0f), new Vector2(-330f, 44f), new Vector2(-110f, 100f),
                  () => { _settings.ResetToDefaults(); _settings.Apply(); Refresh(); });

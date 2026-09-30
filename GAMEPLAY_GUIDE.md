@@ -149,6 +149,28 @@ cheaper and behaves identically against every rig.
 | Lunge | — | — | 7.5 m | — |
 | Melee arc | — | — | 0.85 rad | — |
 
+### The first-person rig (v3 only)
+
+v2 had no player character: the weapon floated in the corner of the screen attached to nothing.
+v3 adds **procedural arms** — `ViewHands` — built from primitives and driven by two-bone IK rather
+than animation clips.
+
+- Shoulders are pinned to the **camera**; wrists are pinned to the **weapon**. Since the weapon is
+  already being moved by sway, bob, recoil and the raise, the arms inherit all of it for free.
+- Each weapon declares two grip points and a hand orientation. The sword is one-handed, so its off
+  arm is hidden rather than stuck to a hilt that has no room for it.
+- **Reloads are scripted as hand positions**, not curves: for the MA-7 the off hand goes to the
+  magazine well, the magazine drops away as a physical object, the hand drops to the belt, returns,
+  inserts, slaps the charging handle and goes back to the foregrip. The rocket launcher tips back
+  over the shoulder and loads a round into the tube. The weapon poses with it — mostly roll, very
+  little pitch, because the rig rotates about the camera and even nine degrees of nose-down puts
+  the gun off the bottom of the frame.
+- Firing adds a shaped muzzle flash (a cone with a star of blades through it) and ejects brass that
+  tumbles past the eye and bounces once.
+- A short-range **view key light** is fixed to the camera. Its range is 1.1 m, so it cannot reach
+  anything in the world: it exists purely so the hands read the same under a street lamp and in an
+  alley.
+
 **Plasma Rifle heat:** +0.065 per shot, cools at 0.45/s. At 1.0 it overheats and locks out for
 1.8 s. That is ~15 shots before a forced cool-down.
 
@@ -246,7 +268,12 @@ from every theme unlocked so far.
 Caps: Juggernauts `1 + floor(wave/6)`. Warlords at least 1 from wave 3, capped at 1 below wave
 6 then `2 + floor(wave/6)`.
 
-**Scaling** — HP `1 + (w-1)^1.12 × 0.07`, speed `1 + (w-1) × 0.03`, damage `1 + (w-1)^1.05 × 0.035`.
+**Scaling** — HP `1 + (w-1)^1.12 × 0.07`, speed `1 + (w-1) × 0.02`, damage `1 + (w-1)^1.05 × 0.035`.
+
+> **Speed scaling is v3's one deliberate balance change**, down from v2's `0.03`. HP and damage
+> still follow v2's curves exactly. v2's speed curve put Skirmishers at 10.5 m/s by wave 15, against
+> a 12 m/s walk — close enough that they could neither be outrun nor led, so the fight stopped being
+> hard and started being unfair. See §12.
 
 **Cadence** — elites on every 3rd wave, Overseer on every 5th, level change after every 5th.
 
@@ -282,6 +309,9 @@ streets (pitch 44 m).
 
 1. **THE LOOP** — *Downtown Chicago, first contact.* Skyline of towers, the L track running
    along the north edge, neon signs on the inner ring, barricaded central plaza. Clear weather.
+   The plaza is laid out rather than open ground: a granite border course, a quartering cross, a
+   centre medallion on the spawn point, four sandbagged and wired emplacements on the diagonals,
+   and a drop pod half-buried in its own crater as something to look at.
 2. **RIVER NORTH** — *Warehouse district, the counter-attack.* Rain. Industrial blocks, a
    container yard on the east side (stacked, with pallets) that is the best cover in the game,
    overturned wrecks and burning cars.
@@ -312,6 +342,25 @@ Unity.
   pod, rubble, hotdog cart, L track, pier kiosk, ferris wheel, yacht, mothership.
 - **3 textures** (asphalt, sidewalk, water normals), **4 decals** (blood, bullet, neon, scorch),
   **3 UI images**, **2 music tracks**.
+
+### Procedural props (v3 only)
+
+The 61 GLBs cover the street — cars, benches, hydrants, buildings. They cover nothing above the
+shopfronts and nothing on the road surface, which is where a first-person night fight actually
+spends its time. `CityProps` fills that in from code, building everything into a shared
+`MeshKit` per material so the whole level's additions come out as about sixteen meshes:
+
+| Where | What |
+|---|---|
+| Roofline | water tower, plant (AHUs, ducts, vent stacks, stair bulkhead), lattice antenna mast with a blinking beacon, lit billboard, sweeping searchlight, helipad, solar array, dish farm, parapet, smoke column |
+| Overhead | utility poles, catenary wire spans, cross-street spans, neon street banners |
+| Facades | lit ground-floor storefront glazing and its pavement spill, awnings with lit sign bands, fire escapes, scaffolding |
+| Street | bollards, parking meters, bike racks, manholes, steam vents, hoarding, cordon tape |
+| Ground | contact shading under every prop, blast craters, debris and litter, puddles, resurfaced patches, cracks, skid marks, plaza banding and centre medallion |
+
+None of it is authored data: it is placed from the building bounds and the block grid, seeded per
+level so a rebuild of THE LOOP is the same THE LOOP. Budget is about **85k triangles and 16 draw
+calls** for the busiest level — the counts go into the per-build log line.
 
 Both music tracks are byte-identical to v1's — they have survived every rewrite.
 
@@ -355,3 +404,36 @@ detection, the graded spawn scoring, the 2-enemies-left aggression rule, and the
 4. **Per-frame pathing re-evaluation oscillates in corners.** Commit to a detour for ~0.9 s.
 5. **Aim height matters.** A generic 1.8 m aim point shoots clean over a 1.0 m Wasp or a 1.25 m
    Gnat. Use the per-type height table.
+
+## 12. Difficulty (v3 only)
+
+Two settings, both under **Settings ▸ DIFFICULTY**, and the only numbers in the game that are not
+v2's. Both default to more forgiving than v2 and both restore the original at one end of the slider.
+
+| Setting | Default | What it does |
+|---|---|---|
+| AIM ASSIST | 70% | Widens the hit capsule by an angular cushion — about half a degree, capped at 0.55 m. It never steers your aim, it cannot shoot through a wall (the wall test runs first and wins), and it is cut to 40% while zoomed, because zooming is the player asking for precision. |
+| ENEMY SPEED | 85% | Scales movement only. Attack intervals, damage and health are untouched, so a slower roster is the same fight rather than a weaker one. 100% is v2. |
+
+A third change is not a setting but a fix: **projectile hits are swept along each step** rather than
+tested at the end of it. A plasma bolt travels 70 m/s, which is 1.2 m per frame at 60 fps — wider
+than a Gnat — so a point test simply missed every enemy a bolt passed clean through. That was most
+of "I hit it and nothing happened".
+
+---
+
+### v3's own traps
+
+6. **The Editor is not the authority on how a material renders.** A runtime-built alpha-blended
+   material renders opaque in the WebGL player and correctly in the Editor, and four different ways
+   of constructing it all shipped broken. Additive and opaque geometry are safe. See the README
+   section — it cost several builds to pin down.
+7. **Anything animated needs `NoBatch`.** `StaticBatchingUtility.Combine` bakes the transform into
+   the combined mesh, which freezes whatever was moving — the trap the mothership's spin hit first
+   and the sweeping searchlights hit second.
+8. **Thin wire must not cast shadows.** A 35 mm cable is narrower than a shadow-map texel, so its
+   shadow resolves into a dotted line; a catenary down a street laid two strings of beads along the
+   road that looked exactly like a broken decal.
+9. **Tune ground tones from the eye-level frame, never from a brightened plan view.** The plaza's
+   granite banding was set from a top-down diagnostic render and looked, from standing height, like
+   holes cut in the floor. The same mistake put near-black scorch marks and puddles on pale paving.

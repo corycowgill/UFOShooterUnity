@@ -111,6 +111,14 @@ public static class AssetImportSetup {
                     ti.anisoLevel = 8;
                     ti.filterMode = FilterMode.Trilinear;
                 }
+                // Decals have the same problem for the same reason: blood, scorch and the contact
+                // falloff all lie flat on the road and are therefore always seen edge-on. Without
+                // anisotropy the falloff sheet in particular samples down to its average alpha and
+                // a soft shadow under a bench renders as a hard-edged rectangle.
+                if (root == DecalRoot) {
+                    ti.anisoLevel = 8;
+                    ti.filterMode = FilterMode.Trilinear;
+                }
                 // Decals need their alpha; the tiling ground textures do not.
                 // The HUD sheet is sliced into sprites at runtime, so it has to import as one.
                 if (root == UiRoot) {

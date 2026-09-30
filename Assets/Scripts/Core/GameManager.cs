@@ -480,17 +480,10 @@ public class GameManager : MonoBehaviour {
     // ------------------------------------------------------------------ pickups
 
     void SpawnPickup(Vector3 position, string type) {
-        var go = Prim.Create(PrimKind.Sphere, "Pickup_" + type, _pickupRoot);
+        // A crate, a cell, an ammo box or a grenade - see PickupProps for why these stopped being
+        // four differently-coloured spheres.
+        var go = PickupProps.Spawn(type, _pickupRoot);
         go.transform.position = position + Vector3.up * 0.6f;
-        go.transform.localScale = Vector3.one * 0.44f;
-
-        Color c = type == "health" ? new Color(0f, 1f, 0.4f)
-                : type == "shield" ? new Color(0f, 0.53f, 1f)
-                : type == "ammo" ? new Color(1f, 0.67f, 0f)
-                : new Color(0.27f, 1f, 0.27f);
-        var r = go.GetComponent<Renderer>();
-        r.material = Fx.AdditiveTinted(c * 3f);
-        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         _pickups.Add(new Pickup { T = go.transform, Life = PickupLifetime, Type = type });
     }

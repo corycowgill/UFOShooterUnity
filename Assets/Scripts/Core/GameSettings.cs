@@ -42,6 +42,22 @@ public class GameSettings {
     public float LookSensitivity = 1f;  // multiplier on the base 0.002 rad/px
     public bool InvertY = false;
 
+    // ---- difficulty ------------------------------------------------------------------------
+    // These two are the only numbers in the game that are NOT v2's. v2 was balanced around a mouse
+    // player who already knew the roster; played cold, a Wasp at 9 m/s crossing at ten metres is
+    // simply not hittable with a 0.014 rad cone, and the whole fight reads as unfair rather than
+    // hard. Both are exposed in Settings so the original feel is one slider away.
+
+    /// <summary>
+    /// Bullet magnetism, 0-1. Widens the hit capsule by an angular cushion, so a shot that lands
+    /// within about half a degree of an enemy counts. It does not steer the player's aim and it
+    /// cannot shoot through walls - the wall test still runs first and still wins.
+    /// </summary>
+    public float AimAssist = 0.7f;
+
+    /// <summary>Multiplier on every enemy's movement speed. 1 is v2.</summary>
+    public float EnemySpeed = 0.85f;
+
     // ---- audio ------------------------------------------------------------
     public float MasterVolume = 1f;
     public float SfxVolume = 0.6f;
@@ -100,9 +116,13 @@ public class GameSettings {
         MasterVolume    = PlayerPrefs.GetFloat(Prefix + "master", MasterVolume);
         SfxVolume       = PlayerPrefs.GetFloat(Prefix + "sfx", SfxVolume);
         MusicVolume     = PlayerPrefs.GetFloat(Prefix + "music", MusicVolume);
+        AimAssist       = PlayerPrefs.GetFloat(Prefix + "aimAssist", AimAssist);
+        EnemySpeed      = PlayerPrefs.GetFloat(Prefix + "enemySpeed", EnemySpeed);
     }
 
     public void Save() {
+        PlayerPrefs.SetFloat(Prefix + "aimAssist", AimAssist);
+        PlayerPrefs.SetFloat(Prefix + "enemySpeed", EnemySpeed);
         PlayerPrefs.SetFloat(Prefix + "brightness", Brightness);
         PlayerPrefs.SetFloat(Prefix + "contrast", Contrast);
         PlayerPrefs.SetFloat(Prefix + "saturation", Saturation);
@@ -242,6 +262,13 @@ public class GameSettings {
                   Get = s => s.LookSensitivity, Set = (s, v) => s.LookSensitivity = v },
         new Row { Group = "CONTROLS", Label = "INVERT Y", Kind = Kind.Toggle, Min = 0f, Max = 1f, Format = OnOff,
                   Get = s => s.InvertY ? 1f : 0f, Set = (s, v) => s.InvertY = v > 0.5f },
+
+        new Row { Group = "DIFFICULTY", Label = "AIM ASSIST", Min = 0f, Max = 1f, Format = Pct,
+                  Tip = "Widens the hit box slightly; never steers your aim",
+                  Get = s => s.AimAssist, Set = (s, v) => s.AimAssist = v },
+        new Row { Group = "DIFFICULTY", Label = "ENEMY SPEED", Min = 0.55f, Max = 1.2f, Format = Pct,
+                  Tip = "100% is the original web build",
+                  Get = s => s.EnemySpeed, Set = (s, v) => s.EnemySpeed = v },
 
         new Row { Group = "AUDIO", Label = "MASTER", Min = 0f, Max = 1f, Format = Pct,
                   Get = s => s.MasterVolume, Set = (s, v) => s.MasterVolume = v },

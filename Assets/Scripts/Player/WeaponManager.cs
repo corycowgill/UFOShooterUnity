@@ -52,6 +52,9 @@ public class WeaponManager : MonoBehaviour {
 
     float _cooldown;
     float _recoil, _swayX, _swayY, _bobT, _raiseT, _swingT;
+    ViewHands _hands;
+    MuzzleFlash _flash;
+    bool _magDropped;
     float _pendingMeleeTime = -1f, _pendingMeleeDmgMul = 1f;
     Enemy _lungeTarget; float _lungeTimer;
     Transform _rig;
@@ -89,14 +92,40 @@ public class WeaponManager : MonoBehaviour {
 
         _muzzleLight = new GameObject("MuzzleLight").AddComponent<Light>();
         _muzzleLight.transform.SetParent(_rig, false);
-        _muzzleLight.transform.localPosition = new Vector3(0.25f, -0.2f, 0.8f);
+        // Pushed out past the muzzle. Sitting on top of the weapon it blew the near face of the
+        // hands out to white on every shot, which was not read as a muzzle flash - it was read as
+        // the arms flickering.
+        _muzzleLight.transform.localPosition = new Vector3(0.22f, -0.12f, 1.15f);
         _muzzleLight.type = LightType.Point;
         _muzzleLight.range = 6f;
         _muzzleLight.intensity = 0f;
         _muzzleLight.shadows = LightShadows.None;
 
+        // A light that exists only for the viewmodel.
+        //
+        // The weapon and the arms are half a metre from the eye, in a game where the world is lit
+        // by street lamps twenty metres away - so how well the player can see their own hands is
+        // decided by whatever they happen to be standing under. A short-range key light fixed to
+        // the camera makes the rig read the same everywhere. The range is the whole trick: at 1.1 m
+        // it cannot reach anything in the world, so it lights the viewmodel and nothing else.
+        var viewKey = new GameObject("ViewKeyLight").AddComponent<Light>();
+        viewKey.transform.SetParent(cam.transform, false);
+        viewKey.transform.localPosition = new Vector3(-0.05f, 0.35f, 0.05f);
+        viewKey.type = LightType.Point;
+        viewKey.range = 1.1f;
+        viewKey.intensity = 1.7f;
+        viewKey.color = new Color(0.82f, 0.86f, 1f);
+        viewKey.shadows = LightShadows.None;
+
         foreach (var k in Arsenal.Order) BuildViewmodel(k);
         SetVisible(Current);
+
+        // The hands are built last and parented to the camera, not to the weapon rig: shoulders
+        // belong to the body, and only the wrists follow the gun.
+        _flash = ViewFx.Create(_rig, Color.white);
+
+        _hands = gameObject.AddComponent<ViewHands>();
+        _hands.Build(cam);
     }
 
     void BuildViewmodel(string key) {
@@ -199,6 +228,7 @@ public class WeaponManager : MonoBehaviour {
         var w = Weapon; var s = St;
         if (!w.UsesMag || s.Reloading > 0f || s.Mag >= w.Mag || s.Reserve <= 0) return;
         s.Reloading = w.Reload;
+        _magDropped = false;
         Audio?.Reload();
     }
 
@@ -230,6 +260,17 @@ public class WeaponManager : MonoBehaviour {
         _recoil = Mathf.Min(0.2f, _recoil + w.Recoil);
         _muzzleLight.color = w.Color;
         _muzzleLight.intensity = w.Kind == WeaponKind.Melee ? 0f : 6f;
+
+        if (_flash != null && w.Kind != WeaponKind.Melee) {
+            // At the muzzle in rig space, sized by the weapon: a rocket tube's flash should not be
+            // the same size as a rifle's.
+            float scale = w.Kind == WeaponKind.Rocket ? 1.8f : w.Kind == WeaponKind.Projectile ? 1.1f : 1f;
+            _flash.Show(w.Pos + w.Muzzle, scale, w.Color);
+        }
+        // Brass, from anything that has a magazine to feed it. The plasma rifle vents rather than
+        // ejects, and a rocket launcher has nothing to throw.
+        if (w.Kind == WeaponKind.Hitscan)
+            ViewFx.EjectCase(_rig.TransformPoint(w.Pos + new Vector3(0.05f, 0.03f, 0.02f)), Cam.transform.rotation);
 
         Vector3 origin = Cam.transform.position;
         Vector3 dir = Cam.transform.forward;
@@ -370,6 +411,24 @@ public class WeaponManager : MonoBehaviour {
         return t;
     }
 
+    /// <summary>
+    /// The aim-assist cushion, in metres, for a target this far away.
+    ///
+    /// It is an *angle*, not a distance: a fixed 0.4 m of slack is generous at 40 m and enormous at
+    /// four, which turns into shooting round corners. Half a degree of cushion is about the width
+    /// of the crosshair, which is exactly the forgiveness a player expects — a shot that looked
+    /// like it was on the target counts as on the target.
+    ///
+    /// It is capped, because a Wasp at 90 m must still have to be aimed at.
+    /// </summary>
+    float AimCushion(float dist) {
+        float k = GameSettings.Instance != null ? Mathf.Clamp01(GameSettings.Instance.AimAssist) : 0f;
+        if (k <= 0f) return 0f;
+        // Zooming is the player asking for precision; do not hand them more help on top of it.
+        if (Zoomed) k *= 0.4f;
+        return Mathf.Min(0.55f, dist * 0.009f) * k;
+    }
+
     HitInfo? RayEnemies(Vector3 origin, Vector3 dir, List<Enemy> enemies, float maxDist,
                         WeaponDef w, float dmgMul) {
         Enemy best = null;
@@ -378,7 +437,11 @@ public class WeaponManager : MonoBehaviour {
         for (int i = 0; i < enemies.Count; i++) {
             var e = enemies[i];
             if (e == null || e.Dead || !e.Ready) continue;
-            float t = RayCapsule(origin, dir, e.CapsuleBase, e.CapsuleRadius, e.CapsuleHeight);
+            // Widen the capsule rather than widening the ray: the ray is what the wall test used,
+            // so a fattened ray could reach past a corner the bullet cannot.
+            float approx = Vector3.Distance(origin, e.CapsuleBase);
+            float r = e.CapsuleRadius + AimCushion(approx);
+            float t = RayCapsule(origin, dir, e.CapsuleBase, r, e.CapsuleHeight);
             if (t >= 0f && t < bestT) { bestT = t; best = e; }
         }
         if (best == null) return null;
@@ -535,14 +598,22 @@ public class WeaponManager : MonoBehaviour {
                 }
             }
 
-            // Direct enemy contact (rockets and plasma only)
+            // Direct enemy contact (rockets and plasma only).
+            //
+            // Swept along the step, not tested at the end of it. A plasma bolt travels 70 m/s, so
+            // at 60 fps it jumps 1.2 m per frame - comfortably more than a Gnat is wide - and a
+            // point test at the new position simply misses every enemy the bolt passed clean
+            // through. That is most of "I hit it and nothing happened".
             if (!dead && p.Kind != "grenade") {
+                var step = pos - prev;
+                float stepLen = step.magnitude;
+                var stepDir = stepLen > 1e-5f ? step / stepLen : Vector3.forward;
                 for (int e = 0; e < enemies.Count; e++) {
                     var en = enemies[e];
                     if (en == null || en.Dead || !en.Ready) continue;
-                    Vector3 d = pos - en.CapsuleBase;
-                    float r = en.CapsuleRadius + 0.2f;
-                    if (d.x * d.x + d.z * d.z < r * r && d.y > -0.3f && d.y < en.CapsuleHeight + 0.3f) {
+                    float r = en.CapsuleRadius + 0.2f + AimCushion(Vector3.Distance(prev, en.CapsuleBase));
+                    float hitT = RayCapsule(prev, stepDir, en.CapsuleBase, r, en.CapsuleHeight);
+                    if (hitT >= 0f && hitT <= stepLen + 0.05f) {
                         if (p.Splash <= 0f) {
                             float dmg = p.Damage;
                             var wdef = Arsenal.Get(p.Kind == "rocket" ? "rocketLauncher" : "plasmaRifle");
@@ -609,14 +680,58 @@ public class WeaponManager : MonoBehaviour {
 
         // Zoom pulls the rifle toward the centre of the screen.
         float zoom = (Zoomed && Current == "rifle") ? 1f : 0f;
-        var basePos = new Vector3(_swayX + bobX, _swayY + bobY + raise - _recoil * 0.4f, -_recoil * 0.5f);
+        // Reload pose: the weapon comes down and cants inward so the magazine well is actually in
+        // view and the off hand has somewhere to work. Without it the hands act out a reload on a
+        // gun that has not moved, which reads as the arms glitching rather than as a reload.
+        var reloadPos = Vector3.zero;
+        var reloadRot = Vector3.zero;
+        float rt = ReloadPct;
+        if (IsReloading) {
+            float bell = Mathf.Sin(Mathf.Clamp01(rt) * Mathf.PI);
+            // Mostly roll, barely any drop. The first version dipped the weapon 7 cm and it left
+            // the bottom of the frame completely for half the reload - the animation was playing
+            // perfectly somewhere the player could not see it. Canting the receiver toward the
+            // camera shows the magazine well, which is the whole point, and keeps the gun on screen.
+            if (Current == "rocketLauncher") {
+                // Tipped back over the shoulder, the way a tube is actually loaded.
+                reloadPos = new Vector3(0.01f, 0.01f, -0.07f) * bell;
+                reloadRot = new Vector3(-16f, 9f, -6f) * bell;
+            } else {
+                // Nose UP, not down. The rig rotates about the camera, so the weapon sits about
+                // 0.6 m out on the end of that lever: nine degrees of nose-down pitch drops it
+                // eight centimetres, which is most of the way off the bottom of the frame before
+                // the roll has even been applied.
+                reloadPos = new Vector3(0.01f, 0.015f, -0.01f) * bell;
+                reloadRot = new Vector3(-6f, 10f, -20f) * bell;
+            }
+            if (!_magDropped && rt >= ViewHands.MagDropAt) {
+                _magDropped = true;
+                DropMagazine();
+            }
+        }
+
+        var basePos = new Vector3(_swayX + bobX, _swayY + bobY + raise - _recoil * 0.4f, -_recoil * 0.5f)
+                    + reloadPos;
         basePos.x = Mathf.Lerp(basePos.x, basePos.x - Arsenal.Get("rifle").Pos.x + 0.02f, zoom);
         basePos.y = Mathf.Lerp(basePos.y, basePos.y + 0.10f, zoom);
 
         _rig.localPosition = Vector3.Lerp(_rig.localPosition, basePos, 1f - Mathf.Exp(-18f * dt));
         _rig.localRotation = Quaternion.Slerp(_rig.localRotation,
-            Quaternion.Euler(-_recoil * 90f - swing * 45f, _swayX * 200f, swing * 20f),
+            Quaternion.Euler(-_recoil * 90f - swing * 45f + reloadRot.x,
+                             _swayX * 200f + reloadRot.y,
+                             swing * 20f + reloadRot.z),
             1f - Mathf.Exp(-18f * dt));
+
+        // Hands last, so they read the rig after this frame's pose has been written to it.
+        if (_hands != null) {
+            _viewmodels.TryGetValue(Current, out var vm);
+            _hands.Weapon = vm != null ? vm.transform : null;
+            _hands.WeaponKey = Current;
+            _hands.Reloading = IsReloading;
+            _hands.ReloadT = rt;
+            _hands.Hidden = Stats != null && Stats.Dead;
+            _hands.Tick(dt);
+        }
 
         if (_muzzleLight.intensity > 0f)
             _muzzleLight.intensity = Mathf.Max(0f, _muzzleLight.intensity - 40f * dt);
@@ -626,6 +741,39 @@ public class WeaponManager : MonoBehaviour {
             float wantFov = zoom > 0.5f ? BaseFov * 0.6f : BaseFov;
             Cam.fieldOfView = Mathf.Lerp(Cam.fieldOfView, wantFov, 1f - Mathf.Exp(-12f * dt));
         }
+    }
+
+    /// <summary>
+    /// Throw the spent magazine clear.
+    ///
+    /// It is a box, it falls, and it is gone in a second and a half - but it is the only part of
+    /// the reload that leaves the viewmodel, and it is what tells the player the reload has
+    /// actually started rather than that the gun has stopped working.
+    /// </summary>
+    void DropMagazine() {
+        if (_rig == null || Cam == null) return;
+        var w = Weapon;
+        var go = Prim.Create(PrimKind.Cube, "SpentMag");
+        go.transform.position = _rig.TransformPoint(w.Pos + new Vector3(-0.03f, -0.12f, 0.02f));
+        go.transform.rotation = Cam.transform.rotation;
+        go.transform.localScale = Current == "rocketLauncher"
+            ? new Vector3(0.09f, 0.09f, 0.32f)
+            : new Vector3(0.05f, 0.17f, 0.10f);
+
+        var mat = Prim.Lit();
+        if (mat != null) {
+            var c = new Color(0.075f, 0.080f, 0.090f);
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+            mat.color = c;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.25f);
+        }
+        var r = go.GetComponent<Renderer>();
+        r.material = mat;
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        var f = go.AddComponent<FallingDebris>();
+        f.Velocity = Cam.transform.TransformDirection(new Vector3(-0.6f, -0.2f, 0.25f));
+        f.Spin = new Vector3(Random.Range(-260f, 260f), Random.Range(-260f, 260f), Random.Range(-260f, 260f));
     }
 
     public void AddSway(float dx, float dy) {

@@ -42,6 +42,19 @@ public class Fx : MonoBehaviour {
         return m;
     }
 
+    /// <summary>
+    /// Turn an opaque runtime material into an alpha-blended one.
+    ///
+    /// **Everything built this way must also carry a texture and be created at scene start**, the
+    /// way <see cref="Decals"/> does it - that is the only combination observed to survive the
+    /// WebGL build. A textureless alpha-blended material built at runtime renders OPAQUE in the
+    /// player and correctly in the Editor, and nothing about the material's state says so: surface,
+    /// both blend factors, ZWrite, the transparent keyword and the render queue all read back
+    /// exactly as they do on a decal that works.
+    ///
+    /// For anything else, use <see cref="AdditiveTinted"/> or opaque geometry. Smoke and steam are
+    /// additive for this reason and no other; so is the levels' smoke column.
+    /// </summary>
     public static void MakeTransparent(Material m) {
         if (m == null || m.GetFloat("_Surface") > 0.5f) return;
         m.SetFloat("_Surface", 1f);
@@ -77,6 +90,8 @@ public class Fx : MonoBehaviour {
         public float Life, MaxLife, StartScale, EndScale;
         public Color Start;
         public bool Gravity;
+        /// <summary>Fade out when close to the camera. Set on the big, slow, volumetric puffs.</summary>
+        public bool SoftNear;
     }
 
     readonly List<Puff> _live = new List<Puff>(256);
@@ -85,7 +100,7 @@ public class Fx : MonoBehaviour {
 
     // Raised for the fires: a dozen wrecks emitting flame, smoke and embers continuously would
     // otherwise recycle the pool out from under impacts and explosions during a wave.
-    const int PoolSize = 640;
+    const int PoolSize = 700;
 
     void Awake() {
         _root = new GameObject("FxPool").transform;
@@ -93,6 +108,16 @@ public class Fx : MonoBehaviour {
         for (int i = 0; i < PoolSize; i++) _free.Push(NewPuff());
     }
 
+    /// <summary>
+    /// One pooled puff. Additive, always.
+    ///
+    /// Two attempts were made to give smoke and steam alpha blending so they could darken what is
+    /// behind them, and both shipped broken: flipping `_DstBlend` on a live material left it opaque
+    /// in the player, and a separate pool of alpha-blended puffs built in Awake did too. Every
+    /// burning wreck and street vent then put a stack of solid grey spheres in the street. Additive
+    /// is the mode this build honours, so smoke here is smoke *lit* from below rather than smoke
+    /// that blocks light - which is what smoke over a burning city looks like anyway.
+    /// </summary>
     Puff NewPuff() {
         var go = Prim.Create(PrimKind.Sphere, "Puff", _root);
         go.SetActive(false);
@@ -104,7 +129,8 @@ public class Fx : MonoBehaviour {
         return new Puff { T = go.transform, R = r, M = m };
     }
 
-    Puff Spawn(Vector3 pos, Color color, float scale, float endScale, float life, Vector3 vel, bool gravity) {
+    Puff Spawn(Vector3 pos, Color color, float scale, float endScale, float life, Vector3 vel,
+               bool gravity, bool softNear = false) {
         if (_free.Count == 0) {
             // Recycle the oldest rather than growing without bound.
             if (_live.Count == 0) return null;
@@ -118,6 +144,7 @@ public class Fx : MonoBehaviour {
         p.StartScale = scale; p.EndScale = endScale;
         p.Life = p.MaxLife = life;
         p.Vel = vel; p.Gravity = gravity;
+        p.SoftNear = softNear;
         p.Start = color;
         SetColor(p.M, color);
         p.T.gameObject.SetActive(true);
@@ -143,6 +170,18 @@ public class Fx : MonoBehaviour {
             p.T.localScale = Vector3.one * Mathf.Lerp(p.StartScale, p.EndScale, k);
             var c = p.Start;
             c.a = p.Start.a * (1f - k);
+
+            // Near fade, for the big slow puffs only.
+            //
+            // These are spheres, and there is no soft-particle depth fade in this pipeline, so a
+            // two-metre smoke or steam puff a metre from the camera stops reading as vapour and
+            // reads as a glass ball with a hard silhouette - which is exactly what a street vent
+            // looked like when you walked past it. Impacts, sparks and muzzle flashes are exempt:
+            // a muzzle flash is spawned a hand's width from the camera on purpose.
+            if (p.SoftNear && Cam != null) {
+                float d = Vector3.Distance(Cam.transform.position, p.T.position);
+                c.a *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.0f, 7.0f, d));
+            }
             SetColor(p.M, c);
         }
 
@@ -183,11 +222,28 @@ public class Fx : MonoBehaviour {
         Spawn(pos, c, Random.Range(0.14f, 0.26f) * scale, 0.02f * scale, Random.Range(0.28f, 0.48f), vel, false);
     }
 
-    /// <summary>Smoke: slower, larger, and dark, so it reads against the night sky.</summary>
+    /// <summary>Smoke: slower and larger, rising off a fire and catching its light.</summary>
     public void Smoke(Vector3 pos, float scale = 1f) {
-        var c = new Color(0.14f, 0.13f, 0.14f, 0.55f);
+        // Additive, so this is the fire's light *in* the smoke rather than the smoke itself - warm
+        // at the base, falling away to a cold grey as it rises and cools.
+        var c = new Color(0.22f, 0.17f, 0.14f, 0.20f);
         var vel = new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(1.0f, 1.7f), Random.Range(-0.3f, 0.3f)) * scale;
-        Spawn(pos, c, 0.5f * scale, 2.6f * scale, Random.Range(1.6f, 2.6f), vel, false);
+        Spawn(pos, c, 0.5f * scale, 2.6f * scale, Random.Range(1.6f, 2.6f), vel, false, softNear: true);
+    }
+
+    /// <summary>
+    /// Steam off a street vent: pale, slow, and much longer-lived than smoke, because a plume that
+    /// dissipates in a second reads as a puff of dust instead.
+    /// </summary>
+    public void Steam(Vector3 pos, float scale = 1f) {
+        // Additive suits steam anyway: a plume off a street vent at night is lit by the lamp above
+        // it, and what you see is the light in it rather than the shape of it.
+        var c = new Color(0.30f, 0.33f, 0.38f, 0.10f);
+        var vel = new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(0.8f, 1.4f), Random.Range(-0.2f, 0.2f)) * scale;
+        // Small and numerous, and short-lived. A few big spheres read as balloons; the plume has
+        // to be made of pieces smaller than itself, and it has to thin out before it gets tall
+        // enough to stand between the player and anything.
+        Spawn(pos, c, 0.20f * scale, 0.85f * scale, Random.Range(1.3f, 2.1f), vel, false, softNear: true);
     }
 
     /// <summary>An ember: small, bright, thrown up and falling back under gravity.</summary>

@@ -55,10 +55,10 @@ Assets/
     Textures/ Decals/ UI/ Audio/
   Scripts/
     Core/     Arena, GameManager, InputMap, ModelCache
-    Player/   PlayerController, PlayerStats, WeaponManager, WeaponData
+    Player/   PlayerController, PlayerStats, WeaponManager, WeaponData, ViewHands, ViewFx
     Enemies/  Enemy, EnemyData, EnemyAnimator, EnemyProjectiles, WaveManager
-    Level/    LevelData (generated), LevelBuilder
-    FX/       Fx, GameAudio
+    Level/    LevelData (generated), LevelBuilder, CityProps, MeshKit
+    FX/       Fx, GameAudio, PickupProps, FallingDebris
     UI/       Hud
   Editor/
     ProjectSetup       URP + player settings + scene generation
@@ -84,6 +84,54 @@ Identical behaviour against every rig regardless of mesh complexity, and cheap a
 `Run`, `Attack`, `Shoot`, `Hit`, `Death`) and the AI picks between them imperatively, scaling
 playback rate by measured movement speed. An AnimatorController would be a state graph we only
 ever bypass. `AssetImportSetup` sets glTFast's animation method to Legacy for this reason.
+
+**Street dressing above the shopfronts is procedural.** v2's GLB catalogue has no rooftop
+clutter, nothing overhead and nothing on the road surface, so `CityProps` builds them — water
+towers, masts, billboards, catenary wires, lit storefronts, fire escapes, craters, contact
+shading — appending into a `MeshKit` per material. Placing a water tower on every roof therefore
+costs no draw calls at all; the whole library comes out as ~16 meshes and ~85k triangles.
+
+Two rules that are easy to break there. Anything whose transform is animated needs a `NoBatch`
+component, or `StaticBatchingUtility.Combine` bakes its transform and freezes it. And thin wire
+goes in its own kit with shadow casting **off**: a 35 mm cable is far narrower than a shadow-map
+texel, so its shadow resolves into a dotted line and lays a string of beads down the middle of
+the road that looks exactly like a decal bug.
+
+### Runtime transparency: additive works, alpha blending does not
+
+The most expensive lesson in the street-dressing work, and it costs a six-minute WebGL build to
+learn each time, so it is written down here.
+
+**A material built at runtime and set to alpha blending renders OPAQUE in the WebGL player.** It is
+correct in the Editor. It is correct in a play-mode capture. It ships wrong. It produced, in turn:
+
+- contact shadows as hard black rectangles under every bench and car,
+- smoke columns as solid black mushrooms hanging over the skyline,
+- a street vent's steam as a stack of grey billiard balls in the middle of the road.
+
+Each of those was inspected in the Editor and pronounced fine. What settled it was tinting every
+ground layer a different flat colour, building, and looking: the offenders were the two layers that
+came back **black instead of their debug colour** — the only two that were alpha blended.
+
+Nothing about the material says so. `_Surface`, `_SrcBlend`, `_DstBlend`, `_ZWrite`, the
+`_SURFACE_TYPE_TRANSPARENT` keyword and the render queue all read back in the player exactly as
+they do on a `Decals` quad that renders correctly. Four separate constructions were tried — setting
+the state by hand, going through `Fx.MakeTransparent`, building the material in `Awake` rather than
+during the level build, and forcing the render queue — and all four shipped opaque.
+
+So the rule is empirical, not theoretical:
+
+- **`Fx.AdditiveTinted` works.** Every neon sign, glow panel, beam, light shaft, shopfront and
+  particle uses it. Smoke and steam are additive for this reason and no other — which is no great
+  loss, because smoke over a city that is on fire is lit from below anyway.
+- **Opaque geometry always works.** The contact shading under props is two concentric lit discs
+  rather than a textured quad with a radial alpha, for exactly this reason.
+- **`Decals` is the one alpha-blended thing that ships correctly**, and it is textured and built in
+  `Awake`. Do not assume a new alpha-blended material will behave like it; verify in a build.
+
+And a trap inside the trap: additive blending multiplies by the texture's **colour**, so the falloff
+sheet is a white radial gradient on black. The first version was black with a radial alpha — right
+for alpha blending, and it adds precisely nothing when blended additively.
 
 **Sound effects are synthesised at startup.** `GameAudio` generates the whole SFX bank as PCM in
 C#, the same way v2 generated it with WebAudio. The only audio assets shipped are the two music
@@ -177,6 +225,19 @@ node Tools/serve.mjs --dir Build/web --port 8123 &
 node Tools/verify-web.mjs --gpu          # loads it in real Chrome, plays it, screenshots to shots/
 node Tools/measure-frame.mjs shots/04-gameplay-2.png
 ```
+
+For a look at the level itself, without a web build in the loop:
+
+```bash
+Tools/shots.sh                          # both suites -> shots-layout/
+Tools/shots.sh Render_Eye_Level_Tour    # just the walk-around, ~40 s
+node Tools/contact-sheet.mjs shots-layout sheet.jpg --match tour- --cols 3
+```
+
+`shots.sh` runs the `LayoutShots` suites in batchmode **without** `-nographics`, which is what
+gives them a graphics device; they `Assert.Ignore` themselves when there is none, so they stay out
+of the pass/fail gate. `contact-sheet.mjs` tiles the output into one labelled image, which is how
+a change to the street dressing gets judged in one look rather than thirteen.
 
 `verify-web.mjs` boots the build in headless Chrome, captures the ident mid-play, clicks START,
 sweeps the view while firing, and fails on any console error. `measure-frame.mjs` turns a

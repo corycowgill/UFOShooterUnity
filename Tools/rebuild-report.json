@@ -1,0 +1,1240 @@
+{
+  "generated": "2026-10-01T21:17:12.551Z",
+  "results": [
+    {
+      "name": "gnat",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/rigged_gnat.glb",
+      "tris": 0,
+      "t0": 15999,
+      "t1": 15999,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3689731,
+      "anims": 7,
+      "skins": 1,
+      "emissivePct": 0,
+      "source": "rigged_gnat.glb"
+    },
+    {
+      "name": "skirmisher",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/rigged_skirmisher.glb",
+      "tris": 0,
+      "t0": 16000,
+      "t1": 16000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3225042,
+      "anims": 7,
+      "skins": 1,
+      "emissivePct": 0.4,
+      "source": "rigged_skirmisher.glb"
+    },
+    {
+      "name": "warlord",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/rigged_warlord.glb",
+      "tris": 0,
+      "t0": 18000,
+      "t1": 18000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3588904,
+      "anims": 7,
+      "skins": 1,
+      "emissivePct": 0,
+      "source": "rigged_warlord.glb"
+    },
+    {
+      "name": "juggernaut",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/rigged_juggernaut.glb",
+      "tris": 0,
+      "t0": 19999,
+      "t1": 19999,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 4093350,
+      "anims": 7,
+      "skins": 1,
+      "emissivePct": 0,
+      "source": "rigged_juggernaut.glb"
+    },
+    {
+      "name": "wasp",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/wasp.glb",
+      "tris": 24000,
+      "t0": 94035,
+      "t1": 24000,
+      "via": "blender",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2919851,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "wasp_24000.glb"
+    },
+    {
+      "name": "overseer",
+      "cat": "enemies",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/overseer.glb",
+      "tris": 24000,
+      "t0": 98418,
+      "t1": 24000,
+      "via": "blender",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 4071985,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.4,
+      "source": "overseer_24000.glb"
+    },
+    {
+      "name": "rifle",
+      "cat": "weapons",
+      "res": 2048,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/weapon_rifle.glb",
+      "tris": 24000,
+      "t0": 93580,
+      "t1": 24000,
+      "via": "meshopt",
+      "sizes": [
+        2048,
+        1024
+      ],
+      "bytes": 4654806,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "weapon_rifle.glb"
+    },
+    {
+      "name": "plasma_rifle",
+      "cat": "weapons",
+      "res": 2048,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/weapon_plasma_rifle.glb",
+      "tris": 24000,
+      "t0": 94601,
+      "t1": 23999,
+      "via": "blender",
+      "sizes": [
+        2048,
+        1024
+      ],
+      "bytes": 7792762,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "plasma_rifle_24000.glb"
+    },
+    {
+      "name": "rocket_launcher",
+      "cat": "weapons",
+      "res": 2048,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/weapon_rocket_launcher.glb",
+      "tris": 24000,
+      "t0": 98478,
+      "t1": 26520,
+      "via": "meshopt",
+      "sizes": [
+        2048,
+        1024
+      ],
+      "bytes": 6394580,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "weapon_rocket_launcher.glb"
+    },
+    {
+      "name": "energy_sword",
+      "cat": "weapons",
+      "res": 2048,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/weapon_energy_sword.glb",
+      "tris": 24000,
+      "t0": 96382,
+      "t1": 24000,
+      "via": "blender",
+      "sizes": [
+        2048,
+        1024
+      ],
+      "bytes": 8007717,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "energy_sword_24000.glb"
+    },
+    {
+      "name": "barrier_jersey",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/barrier_jersey_lo.glb",
+      "tris": 0,
+      "t0": 3999,
+      "t1": 3999,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 715180,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "barrier_jersey_lo.glb"
+    },
+    {
+      "name": "bench",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/bench_lo.glb",
+      "tris": 0,
+      "t0": 3000,
+      "t1": 3000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 741870,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "bench_lo.glb"
+    },
+    {
+      "name": "bus_shelter",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/bus_shelter_lo.glb",
+      "tris": 0,
+      "t0": 9000,
+      "t1": 9000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 953870,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "bus_shelter_lo.glb"
+    },
+    {
+      "name": "car_wreck",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/car_wreck_lo.glb",
+      "tris": 0,
+      "t0": 11999,
+      "t1": 11999,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2529891,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "car_wreck_lo.glb"
+    },
+    {
+      "name": "cones",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/cones_lo.glb",
+      "tris": 0,
+      "t0": 3000,
+      "t1": 3000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 849836,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "cones_lo.glb"
+    },
+    {
+      "name": "container",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/container_lo.glb",
+      "tris": 0,
+      "t0": 6000,
+      "t1": 6000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 936296,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "container_lo.glb"
+    },
+    {
+      "name": "cta_bus",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/cta_bus_lo.glb",
+      "tris": 0,
+      "t0": 16000,
+      "t1": 16000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2511828,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "cta_bus_lo.glb"
+    },
+    {
+      "name": "drop_pod",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/drop_pod_lo.glb",
+      "tris": 0,
+      "t0": 14000,
+      "t1": 14000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3392476,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "drop_pod_lo.glb"
+    },
+    {
+      "name": "dumpster",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/dumpster_lo.glb",
+      "tris": 0,
+      "t0": 6000,
+      "t1": 6000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 846250,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "dumpster_lo.glb"
+    },
+    {
+      "name": "ferris_wheel",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/ferris_wheel_lo.glb",
+      "tris": 0,
+      "t0": 22000,
+      "t1": 22000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3298748,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "ferris_wheel_lo.glb"
+    },
+    {
+      "name": "hotdog_cart",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/hotdog_cart_lo.glb",
+      "tris": 0,
+      "t0": 7998,
+      "t1": 7998,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3109682,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "hotdog_cart_lo.glb"
+    },
+    {
+      "name": "hydrant",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/hydrant_lo.glb",
+      "tris": 0,
+      "t0": 4000,
+      "t1": 4000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 810298,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "hydrant_lo.glb"
+    },
+    {
+      "name": "l_track",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/l_track.glb",
+      "tris": 20000,
+      "t0": 95361,
+      "t1": 21942,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2717860,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "l_track.glb"
+    },
+    {
+      "name": "mailbox",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/mailbox_lo.glb",
+      "tris": 0,
+      "t0": 3999,
+      "t1": 3999,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 836220,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "mailbox_lo.glb"
+    },
+    {
+      "name": "mothership",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/mothership_lo.glb",
+      "tris": 0,
+      "t0": 23999,
+      "t1": 23999,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3354259,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "mothership_lo.glb"
+    },
+    {
+      "name": "news_box",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/news_box_lo.glb",
+      "tris": 0,
+      "t0": 4000,
+      "t1": 4000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 865939,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "news_box_lo.glb"
+    },
+    {
+      "name": "pallets",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/pallets_lo.glb",
+      "tris": 0,
+      "t0": 7000,
+      "t1": 7000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 1031386,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "pallets_lo.glb"
+    },
+    {
+      "name": "pier_kiosk",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/pier_kiosk_lo.glb",
+      "tris": 0,
+      "t0": 8999,
+      "t1": 8999,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2483243,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "pier_kiosk_lo.glb"
+    },
+    {
+      "name": "planter",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/planter_lo.glb",
+      "tris": 0,
+      "t0": 3999,
+      "t1": 3999,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 878418,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "planter_lo.glb"
+    },
+    {
+      "name": "police_car",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/police_car_lo.glb",
+      "tris": 0,
+      "t0": 12000,
+      "t1": 12000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2206120,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.4,
+      "source": "police_car_lo.glb"
+    },
+    {
+      "name": "rubble",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/rubble_lo.glb",
+      "tris": 0,
+      "t0": 10000,
+      "t1": 10000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3061890,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "rubble_lo.glb"
+    },
+    {
+      "name": "sandbags",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/sandbags_lo.glb",
+      "tris": 0,
+      "t0": 6000,
+      "t1": 6000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 738934,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "sandbags_lo.glb"
+    },
+    {
+      "name": "taxi",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/taxi_lo.glb",
+      "tris": 0,
+      "t0": 12000,
+      "t1": 12000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2174715,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "taxi_lo.glb"
+    },
+    {
+      "name": "traffic_light",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/traffic_light_lo.glb",
+      "tris": 0,
+      "t0": 3500,
+      "t1": 3500,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 669724,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "traffic_light_lo.glb"
+    },
+    {
+      "name": "trash_can",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/trash_can_lo.glb",
+      "tris": 0,
+      "t0": 5000,
+      "t1": 5000,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 948618,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "trash_can_lo.glb"
+    },
+    {
+      "name": "tree",
+      "cat": "props",
+      "res": 512,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/tree_lo.glb",
+      "tris": 0,
+      "t0": 4999,
+      "t1": 4999,
+      "via": "as-is",
+      "sizes": [
+        512,
+        256
+      ],
+      "bytes": 777459,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "tree_lo.glb"
+    },
+    {
+      "name": "yacht",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/props/yacht_lo.glb",
+      "tris": 0,
+      "t0": 12000,
+      "t1": 12000,
+      "via": "as-is",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3028786,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "yacht_lo.glb"
+    },
+    {
+      "name": "building_commercial_006",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_commercial_006.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2707444,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 3.6,
+      "source": "building_commercial_006.glb"
+    },
+    {
+      "name": "building_industrial_019",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_industrial_019.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2866220,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 5.7,
+      "source": "building_industrial_019.glb"
+    },
+    {
+      "name": "building_industrial_020",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_industrial_020.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14956,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3645028,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 12.9,
+      "source": "building_industrial_020.glb"
+    },
+    {
+      "name": "building_residential_010",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_residential_010.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14212,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2865180,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 1.9,
+      "source": "building_residential_010.glb"
+    },
+    {
+      "name": "building_residential_013",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_residential_013.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2872921,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 4.7,
+      "source": "building_residential_013.glb"
+    },
+    {
+      "name": "building_residential_015",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_residential_015.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2831117,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 3.3,
+      "source": "building_residential_015.glb"
+    },
+    {
+      "name": "building_residential_018",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_residential_018.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14596,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2968408,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 5,
+      "source": "building_residential_018.glb"
+    },
+    {
+      "name": "building_residential_022",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_residential_022.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 13998,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2962741,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 8.6,
+      "source": "building_residential_022.glb"
+    },
+    {
+      "name": "building_skyscraper_016",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_016.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3337039,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 3.4,
+      "source": "building_skyscraper_016.glb"
+    },
+    {
+      "name": "building_skyscraper_020",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_020.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3164741,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 1.5,
+      "source": "building_skyscraper_020.glb"
+    },
+    {
+      "name": "building_skyscraper_030",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_030.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3223566,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 2,
+      "source": "building_skyscraper_030.glb"
+    },
+    {
+      "name": "building_skyscraper_044",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_044.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3491069,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 2.7,
+      "source": "building_skyscraper_044.glb"
+    },
+    {
+      "name": "building_skyscraper_046",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_046.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 13998,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2850411,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 1.6,
+      "source": "building_skyscraper_046.glb"
+    },
+    {
+      "name": "building_skyscraper_048",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_skyscraper_048.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14674,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3283943,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 3.1,
+      "source": "building_skyscraper_048.glb"
+    },
+    {
+      "name": "vehicle_alien_003",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_alien_003.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3451420,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 7.5,
+      "source": "vehicle_alien_003.glb"
+    },
+    {
+      "name": "vehicle_alien_019",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_alien_019.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 15010,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3260556,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 1.8,
+      "source": "vehicle_alien_019.glb"
+    },
+    {
+      "name": "vehicle_civilian_001",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_001.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3341107,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.9,
+      "source": "vehicle_civilian_001.glb"
+    },
+    {
+      "name": "vehicle_civilian_003",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_003.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2695794,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.4,
+      "source": "vehicle_civilian_003.glb"
+    },
+    {
+      "name": "vehicle_civilian_009",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_009.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2981821,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.7,
+      "source": "vehicle_civilian_009.glb"
+    },
+    {
+      "name": "vehicle_civilian_012",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_012.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3219879,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.5,
+      "source": "vehicle_civilian_012.glb"
+    },
+    {
+      "name": "vehicle_civilian_013",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_013.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2950582,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.6,
+      "source": "vehicle_civilian_013.glb"
+    },
+    {
+      "name": "vehicle_civilian_014",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_014.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3021901,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 1.6,
+      "source": "vehicle_civilian_014.glb"
+    },
+    {
+      "name": "vehicle_civilian_019",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_019.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 13996,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3188947,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.7,
+      "source": "vehicle_civilian_019.glb"
+    },
+    {
+      "name": "vehicle_civilian_021",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/vehicle_civilian_021.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 2942158,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0,
+      "source": "vehicle_civilian_021.glb"
+    },
+    {
+      "name": "building_hospital",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_hospital.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 13998,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3280868,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 2.2,
+      "source": "building_hospital.glb"
+    },
+    {
+      "name": "building_office_mid",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_office_mid.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 14000,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3177846,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 0.2,
+      "source": "building_office_mid.glb"
+    },
+    {
+      "name": "building_police_station",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_police_station.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 16036,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3271245,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 2.1,
+      "source": "building_police_station.glb"
+    },
+    {
+      "name": "building_fire_station",
+      "cat": "props",
+      "res": 1024,
+      "src": "C:/Users/coryc/alienGame/art/raw_glb/chicago_v2/building_fire_station.glb",
+      "tris": 14000,
+      "t0": 40000,
+      "t1": 15044,
+      "via": "meshopt",
+      "sizes": [
+        1024,
+        512
+      ],
+      "bytes": 3271784,
+      "anims": 0,
+      "skins": 0,
+      "emissivePct": 11.5,
+      "source": "building_fire_station.glb"
+    }
+  ]
+}

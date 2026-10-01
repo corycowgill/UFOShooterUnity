@@ -45,7 +45,12 @@ crashlytics-build.properties
 /shots-v2/
 /shots-aim/
 /shots-layout/
+/shots-validate/
 /results.xml
+
+# Intermediate Blender collapse output from Tools/rebuild-assets.mjs. Regenerable, ~11 MB,
+# and only consulted when meshopt gives up on a mesh.
+/Tools/.decimate-cache/
 /layout.xml
 /hands.xml
 /audit.xml

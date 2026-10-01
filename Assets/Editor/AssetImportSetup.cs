@@ -7,7 +7,7 @@ using UnityEngine;
 namespace UFO.EditorTools {
 
 /// <summary>
-/// Configures the importers for the 61 glTF models and the loose textures.
+/// Configures the importers for the 61 glTF models and every loose texture.
 ///
 /// Two settings matter and both are easy to get wrong:
 ///
@@ -15,8 +15,9 @@ namespace UFO.EditorTools {
 ///    picks between them imperatively (see EnemyAnimator). glTFast defaults to Mecanim, which
 ///    would hand us clips we cannot CrossFade by name without building an AnimatorController per
 ///    enemy for no benefit.
-/// 2. **Texture budget.** The decoded PNGs are large; capping them at 1024 and compressing keeps
-///    the WebGL download sane without a visible quality drop at the distances this game plays at.
+/// 2. **Texture budget.** Model textures are loose .png files beside each .gltf, not images
+///    embedded in a .glb, so TextureImporter governs them and DXT1 costs an eighth of RGBA32
+///    per texel. See ConfigureModelTextures - that is what pays for 1024px props.
 ///
 /// glTFast's importer settings are reached through SerializedObject rather than a typed
 /// reference, so a package upgrade that renames the C# class does not break the setup pass.
@@ -32,6 +33,9 @@ public static class AssetImportSetup {
     const int AnimationMethodLegacy = 1;
 
     public static void RunAll() {
+        // Textures first: the .gltf importer resolves them as assets, so they have to exist
+        // and be configured before the models that reference them are imported.
+        ConfigureModelTextures();
         ConfigureModels();
         ConfigureTextures();
         AssetDatabase.SaveAssets();
@@ -40,7 +44,7 @@ public static class AssetImportSetup {
 
     [MenuItem("UFO/Setup/Configure Model Importers")]
     public static void ConfigureModels() {
-        var files = Directory.GetFiles(ModelRoot, "*.glb", SearchOption.AllDirectories);
+        var files = Directory.GetFiles(ModelRoot, "*.gltf", SearchOption.AllDirectories);
         int changed = 0, skipped = 0;
 
         foreach (var path in files) {
@@ -81,6 +85,55 @@ public static class AssetImportSetup {
         if (p.boolValue == value) return false;
         p.boolValue = value;
         return true;
+    }
+
+    /// <summary>
+    /// The model textures. These are loose .png files beside each .gltf rather than images
+    /// embedded in a .glb, and that is deliberate: glTFast's SyncTextureLoader resolves an
+    /// external image URI through AssetDatabase.LoadAssetAtPath&lt;Texture2D&gt;, so these are
+    /// ordinary Unity texture assets and everything below actually applies to them. Embedded
+    /// GLB images bypass TextureImporter entirely and land as uncompressed RGBA32, which is
+    /// why the old pipeline had to pre-shrink every prop to 256px to keep the build shippable.
+    /// DXT1 costs half a byte per texel against RGBA32's four, so the same budget buys 1024px.
+    /// </summary>
+    [MenuItem("UFO/Setup/Configure Model Textures")]
+    public static void ConfigureModelTextures() {
+        int n = 0;
+        foreach (var path in Directory.GetFiles(ModelRoot, "*.png", SearchOption.AllDirectories)) {
+            var assetPath = path.Replace('\\', '/');
+            var ti = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (ti == null) continue;
+
+            // Each file is already authored at its budget (2048 weapons, 1024 heroes and large
+            // props, 512 small props); this is only a ceiling, so it must not undercut them.
+            ti.maxTextureSize = 2048;
+            ti.textureCompression = TextureImporterCompression.Compressed;
+            ti.mipmapEnabled = true;
+            ti.wrapMode = TextureWrapMode.Clamp;
+            ti.filterMode = FilterMode.Trilinear;
+            ti.anisoLevel = 4;
+            ti.alphaIsTransparency = false;
+
+            // DXT alone shrinks VRAM but not the download: the WebGL data file is Brotli'd, and
+            // Brotli squeezed the old uncompressed RGBA32 hard while DXT blocks are already dense
+            // enough to resist it. Measured: switching to DXT cut uncompressed assets 20% and still
+            // pushed the payload from 77.3 to 79.3 MB. Crunch is the piece that pays on the wire -
+            // it compresses the DXT blocks for storage and decodes back to DXT at load, so VRAM is
+            // unchanged. It is lossy on top of DXT and slow to import, which is the trade.
+            ti.crunchedCompression = true;
+            ti.compressionQuality = 75;
+
+            // A metallic/roughness map holds measurements, not colour. Importing it as sRGB
+            // puts a gamma curve through the roughness and every surface reads too glossy.
+            // glTFast flags this itself for embedded images; for external ones it is on us.
+            // Emissive maps DO carry colour and stay sRGB - the neon has to come back out
+            // the hue it went in as.
+            ti.sRGBTexture = !assetPath.EndsWith("_metallicRoughness.png");
+
+            ti.SaveAndReimport();
+            n++;
+        }
+        Debug.Log($"[Import] model textures configured: {n}");
     }
 
     [MenuItem("UFO/Setup/Configure Texture Importers")]
@@ -141,7 +194,7 @@ public static class AssetImportSetup {
     [MenuItem("UFO/Diagnose/Enemy Rigs")]
     public static void DiagnoseEnemyRigs() {
         foreach (var key in new[] { "gnat", "skirmisher", "warlord", "juggernaut", "wasp", "overseer" }) {
-            var path = $"{ModelRoot}/enemies/{key}.glb";
+            var path = $"{ModelRoot}/enemies/{key}.gltf";
             var objs = AssetDatabase.LoadAllAssetsAtPath(path);
             if (objs == null || objs.Length == 0) { Debug.LogWarning($"  {key}: NOT IMPORTED"); continue; }
 
@@ -160,7 +213,7 @@ public static class AssetImportSetup {
     public static void DiagnoseCatalogue() {
         var missing = new List<string>();
         foreach (var kv in LevelData.Catalog) {
-            var path = "Assets/Resources/" + kv.Value.ResourcePath + ".glb";
+            var path = "Assets/Resources/" + kv.Value.ResourcePath + ".gltf";
             if (!File.Exists(path)) missing.Add($"{kv.Key} -> {kv.Value.ResourcePath}");
         }
         if (missing.Count == 0) Debug.Log($"[Diagnose] all {LevelData.Catalog.Count} catalogue entries resolve");

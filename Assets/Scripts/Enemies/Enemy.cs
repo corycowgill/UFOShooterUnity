@@ -103,6 +103,7 @@ public class Enemy : MonoBehaviour {
         BuildModel();
         BuildShieldFx();
         BuildThreatLight();
+        _markers = EnemyMarkers.Attach(transform, Data, Elite, IsBoss);
         Ready = true;
     }
 
@@ -188,6 +189,7 @@ public class Enemy : MonoBehaviour {
                 if (ang < Data.FrontShieldArc) {
                     FrontShield -= amount * (explosive ? 1.5f : 1f);
                     _hitFlash = 0.1f;
+                    _markers?.Flare();
                     Ctx.Fx?.Sparks(point, new Color(0.69f, 0.5f, 1f), 8);
                     Ctx.Audio?.ShieldHit();
                     if (FrontShield <= 0f) { FrontShield = 0f; OnFrontShieldBroken(); }
@@ -209,6 +211,7 @@ public class Enemy : MonoBehaviour {
 
         Hp -= amount;
         _hitFlash = 0.12f;
+        _markers?.Flare();
 
         if (knockback > 0f) {
             Vector3 away = transform.position - from; away.y = 0f;
@@ -458,6 +461,7 @@ public class Enemy : MonoBehaviour {
     static float LightK => ThreatLightOverride >= 0f ? ThreatLightOverride : ThreatLightIntensity;
 
     Light _threatLight;
+    MarkerPulse _markers;
     float _lightBase;
     Color _lightColor;
 

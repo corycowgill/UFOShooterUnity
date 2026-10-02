@@ -1,0 +1,6 @@
+services:
+  - name: ufo-shooter
+    type: web
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .

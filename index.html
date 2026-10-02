@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover lets the canvas run under the notch; the controls inset themselves.
+       user-scalable=no plus touch-action:none below is what stops a drag-to-look from pinch
+       zooming or rubber-band scrolling the page out from under the game. -->
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>UFO Invasion III</title>
+  <link rel="icon" href="data:,">
+  <style>
+    html, body {
+      margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden;
+      /* Every one of these is load-bearing on iOS: without them a look-drag selects text,
+         pops the callout menu, bounces the page, or fires a double-tap zoom mid-firefight. */
+      overscroll-behavior: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #unity-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      display: block; background: #000;
+      touch-action: none;
+      /* Hidden until the ident has finished AND the player is ready, so nobody
+         sees a half-built scene pop in behind the logo. */
+      opacity: 0; transition: opacity .45s ease;
+    }
+    #unity-canvas.ready { opacity: 1; }
+
+    /* Shown only in the gap between the ident ending and the player being
+       ready. On a warm cache that gap is zero and this never appears. */
+    #boot {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center; flex-direction: column;
+      background: #000; color: #cfe9ff; z-index: 10;
+      font: 14px/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .18em; text-transform: uppercase;
+    }
+    #boot.show { display: flex; }
+    #boot-bar { width: min(340px, 60vw); height: 2px; background: #16242e; margin-top: 18px; }
+    #boot-fill { width: 0%; height: 100%; background: #5bd8ff; transition: width .2s ease; }
+    #boot-err { color: #ff6b6b; max-width: 70ch; text-transform: none; letter-spacing: 0; text-align: center; }
+
+    #rotate {
+      position: fixed; inset: 0; z-index: 30; display: none;
+      align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+      background: #000; color: #cfe9ff; text-align: center; padding: 24px;
+      font: 15px/1.7 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .18em; text-transform: uppercase;
+    }
+    #rotate-icon { font-size: 54px; color: #5bd8ff; line-height: 1; }
+    #rotate-sub { color: #6f8d9c; font-size: 12px; }
+    /* Only ever shown on a device that is actually held in the hand - a narrow desktop window
+       is not something to nag about. */
+    @media (orientation: portrait) and (pointer: coarse) {
+      #rotate.armed { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" width="1280" height="720" tabindex="-1"></canvas>
+
+  <!-- Portrait is not a supported way to play this; say so rather than letterboxing it. -->
+  <div id="rotate">
+    <div id="rotate-icon">&#8635;</div>
+    <div>Rotate your device</div>
+    <div id="rotate-sub">This game is played in landscape</div>
+  </div>
+
+  <div id="boot">
+    <div id="boot-msg">Loading</div>
+    <div id="boot-bar"><div id="boot-fill"></div></div>
+    <div id="boot-err"></div>
+  </div>
+
+  <!--
+    Studio ident. Classic script, loaded before anything else so the overlay can
+    attach on the first paint; it defines window.HallucinatedIntro.
+    Vendored from gameCentral/intro/hallucinated-intro.js - the same file
+    castleSurvivor and aliendigger play.
+  -->
+  <script src="TemplateData/hallucinated-intro.js"></script>
+
+  <script src="Build/web.loader.js"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+
+    // --- touch housekeeping, all of it iOS Safari specific ------------------
+    //
+    // touch-action and user-scalable in CSS cover most of it, but Safari still honours two
+    // gestures that would otherwise fire mid-game: the pinch-zoom gesture events, and the
+    // double-tap-to-zoom that a player tapping FIRE twice quickly will trigger by accident.
+    ["gesturestart", "gesturechange", "gestureend"].forEach(function (g) {
+      document.addEventListener(g, function (e) { e.preventDefault(); }, { passive: false });
+    });
+
+    var lastTouchEnd = 0;
+    document.addEventListener("touchend", function (e) {
+      var now = Date.now();
+      if (now - lastTouchEnd <= 320) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // WebAudio starts suspended until a real gesture. Unity does its own unlocking for clicks,
+    // but a first contact that is a TOUCH needs this or the game is silent for the whole session.
+    function unlockAudio() {
+      try {
+        var ctx = window.WebGLAudioContext || (window.__unity && window.__unity.Module &&
+                  window.__unity.Module.WebGLAudioContext);
+        if (ctx && ctx.state === "suspended") ctx.resume();
+      } catch (e) { /* nothing useful to do if the browser refuses */ }
+    }
+    document.addEventListener("touchend", unlockAudio, { passive: true });
+    document.addEventListener("pointerdown", unlockAudio, { passive: true });
+
+    var canvas = document.querySelector("#unity-canvas");
+    var boot = document.querySelector("#boot");
+    var bootFill = document.querySelector("#boot-fill");
+    var bootMsg = document.querySelector("#boot-msg");
+    var bootErr = document.querySelector("#boot-err");
+
+    // The ident and the download run CONCURRENTLY. A Unity WebGL build is tens
+    // of megabytes, so playing the logo first and then starting the download
+    // would add its 4.6s to the wait. Started together, the ident covers load
+    // time instead of adding to it, and the canvas is revealed when both are
+    // done - whichever finishes last.
+    var introDone = (function () {
+      try {
+        if (params.has("nointro") || params.has("debug") || !window.HallucinatedIntro) {
+          return Promise.resolve({ skipped: true });
+        }
+        return window.HallucinatedIntro.play({
+          skippable: true,
+          // A WebAudio sting needs a prior user gesture and a cold page load has
+          // none, so it would be dropped silently. Same call the other games make.
+          sound: false,
+        }).catch(function () { return { skipped: true }; });
+      } catch (e) {
+        return Promise.resolve({ skipped: true });
+      }
+    })();
+
+    var unityReady = createUnityInstance(canvas, {
+      arguments: [],
+      dataUrl: "Build/web.data.unityweb",
+      frameworkUrl: "Build/web.framework.js.unityweb",
+      codeUrl: "Build/web.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Cory Cowgill",
+      productName: "UFO Invasion III",
+      productVersion: "1.0+2871654.20261002123614",
+
+      // Serve the payload from Unity's IndexedDB cache WITHOUT revalidating it.
+      //
+      // The default is "must-revalidate", and on this host that is the same as no cache at all:
+      // Unity revalidates with If-Modified-Since whenever the cached response carried a
+      // Last-Modified header, Render sends Last-Modified but honours only If-None-Match, and so
+      // every repeat visit answered 200 and re-downloaded the whole ~74 MB data file. Measured
+      // against the live site: first visit 79.8 MB, second visit 73.7 MB.
+      //
+      // "immutable" skips revalidation entirely and takes that to 0 bytes. The catch is that it
+      // means it: a new build at the same URL would NEVER be picked up, because the filenames are
+      // fixed (nameFilesAsHashes is off). What makes it safe is productVersion - Unity evicts any
+      // cache entry whose stored version differs from the current one, and BuildWebGL.cs stamps a
+      // fresh version into every build. index.html itself is never cached this way, so it always
+      // arrives carrying the new version, which is what triggers the eviction.
+      //
+      // Change one of those two things without the other and players get a permanently stale game.
+      cacheControl: function (url) {
+        return url.indexOf("Build/") >= 0 ? "immutable" : "no-store";
+      },
+    }, function (progress) {
+      bootFill.style.width = (progress * 100).toFixed(1) + "%";
+    });
+
+    // If the ident finishes first, show the modest progress bar for the rest.
+    introDone.then(function () {
+      var settled = false;
+      unityReady.then(function () { settled = true; }, function () { settled = true; });
+      // A microtask is enough to know whether the player was already up.
+      Promise.resolve().then(function () {
+        if (!settled) boot.classList.add("show");
+      });
+    });
+
+    Promise.all([introDone, unityReady]).then(function (results) {
+      boot.classList.remove("show");
+      canvas.classList.add("ready");
+      canvas.focus();
+      // Expose the instance for debugging and for any harness driving the page.
+      window.__unity = results[1];
+      window.__gameReady = true;
+      // Armed only now: a rotate prompt over a loading screen is just noise.
+      var rot = document.getElementById("rotate");
+      if (rot) rot.classList.add("armed");
+    }).catch(function (message) {
+      boot.classList.add("show");
+      bootMsg.textContent = "Failed to load";
+      bootErr.textContent = String(message);
+      console.error("[UFO] load failed:", message);
+    });
+  })();
+  </script>
+</body>
+</html>

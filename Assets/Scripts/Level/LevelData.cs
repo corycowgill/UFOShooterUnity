@@ -107,7 +107,7 @@ public static class LevelData {
     public static readonly LevelDef[] Levels = {
         new LevelDef {
             Name = "THE LOOP", Subtitle = "Downtown Chicago — first contact",
-            FogColor = 0x0a0c1e, FogDensity = 0.0048f,
+            FogColor = 0x0a0c1e, FogDensity = 0.0032f,
             SkyTop = new Color(0.02f, 0.02f, 0.09f),
             SkyHorizon = new Color(0.16f, 0.07f, 0.1f),
             SkyGlow = new Color(0.35f, 0.12f, 0.05f),
@@ -215,7 +215,7 @@ public static class LevelData {
         },
         new LevelDef {
             Name = "RIVER NORTH", Subtitle = "Warehouse district — the counter-attack",
-            FogColor = 0x0c1410, FogDensity = 0.0055f,
+            FogColor = 0x0c1410, FogDensity = 0.00367f,
             SkyTop = new Color(0.02f, 0.04f, 0.05f),
             SkyHorizon = new Color(0.1f, 0.12f, 0.08f),
             SkyGlow = new Color(0.3f, 0.2f, 0.05f),
@@ -328,7 +328,7 @@ public static class LevelData {
         },
         new LevelDef {
             Name = "LAKEFRONT", Subtitle = "Navy Pier — hold the shoreline",
-            FogColor = 0x0a1020, FogDensity = 0.004f,
+            FogColor = 0x0a1020, FogDensity = 0.00267f,
             SkyTop = new Color(0.01f, 0.02f, 0.08f),
             SkyHorizon = new Color(0.1f, 0.1f, 0.18f),
             SkyGlow = new Color(0.3f, 0.16f, 0.08f),

@@ -121,6 +121,18 @@ public static class AssetImportSetup {
             // it compresses the DXT blocks for storage and decodes back to DXT at load, so VRAM is
             // unchanged. It is lossy on top of DXT and slow to import, which is the trade.
             ti.crunchedCompression = true;
+            // 75, and measured rather than picked. Assets/Editor/TextureQualityAudit.cs blits the
+            // imported texture back out and compares it to the source PNG; the sweep in
+            // TextureSettingSweep.cs prices the alternatives:
+            //
+            //   crunch 75   31.5-32.7 dB   931 KB vram   64.5 MB download   <- shipping
+            //   crunch 100  31.9-33.3 dB   953 KB vram   66.5 MB download
+            //   DXT1        34.0-35.6 dB  1388 KB vram   ~19 MB more again
+            //   BC7         38.4-42.7 dB  2774 KB vram   cannot be crunched
+            //
+            // 100 looked near-free on VRAM alone (+2%), which is why it was tried - but crunch
+            // quality lands on the compressed payload, and it cost 2.0 MB of download for 0.5 dB
+            // that is not visible at 1:1. Not worth it. VRAM is not the wire.
             ti.compressionQuality = 75;
 
             // A metallic/roughness map holds measurements, not colour. Importing it as sRGB

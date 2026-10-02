@@ -46,6 +46,15 @@ crashlytics-build.properties
 /shots-aim/
 /shots-layout/
 /shots-validate/
+/texq/
+# Unity's test runner leaves this behind when a PlayMode run is interrupted.
+/Assets/InitTestScene*.unity
+/Assets/InitTestScene*.unity.meta
+/turntable/
+/shots-fog/
+/shots-fogfix/
+/fog.xml
+/texsweep/
 /results.xml
 
 # Intermediate Blender collapse output from Tools/rebuild-assets.mjs. Regenerable, ~11 MB,
